@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [0.1.14] - 2026-05-12
+
 ### Changed
 
 - **Personas rewritten — first 50 lines load-bearing, all files ≤265 lines.** The five persona files (`cloud_solutions_engineer.md`, `cloud_architect.md`, `cloud_security_engineer.md`, `terraform_engineer.md`, `crossplane_engineer.md`) totalled 2,147 lines before — now 1,063 (cut in half). The first ~50 lines of each now packs everything the model conditions on hardest: identity, scope, what they DON'T own (with explicit hand-off targets), what files they must read, and the hard rules. Everything else is reference material. Removed: long table-of-contents lists, ASCII flow diagrams, duplicate examples, multi-paragraph rationale for every rule, and the `MUST` / `CRITICAL` / `WAIT` all-caps shouting that frontier models don't respond to better than calm prose.
@@ -30,11 +34,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Full walkthrough examples**. `examples/terraform/` and `examples/crossplane/` now contain complete end-to-end runs (config, spec, plan, tasks, reviews, generated code) for an AWS S3 secure-bucket module and an `XPostgreSQLInstance` composition respectively.
 
+- **Prompts: compliance is now context-driven**. The security persona's hard-coded framework list has been removed; compliance scope is read from `.infrakit/context.md` (populated via `/infrakit:setup`). Also drops the explicit composition-contract step and re-syncs `update_composition` with the current prompt shape.
+
+- **README: dropped the `logo.svg` image** from the header for a tighter first-fold.
+
+- **CI: `release.yml` hardened**. The publish step now pins `pypa/gh-action-pypi-publish` to commit SHA `cef221092ed1bacb1cc03d23a2d87d1d172e277b` (v1.14.0) instead of the moving `release/v1` branch, and sets `repository-url: https://upload.pypi.org/legacy/` explicitly. Trusted-publishing config on PyPI was also recreated after the project was deleted and restored — first publish of v0.1.14 promoted a pending publisher into a regular one.
+
 ### Removed
 
 - Per-agent GitHub release ZIPs (`infrakit-template-<agent>-<iac>-<script>-vX.Y.Z.zip`). Install the CLI from PyPI (`pip install infrakit-cli` or `uv pip install infrakit-cli`) and run `infrakit init`.
 - The `--github-token` and `--skip-tls` flags on `infrakit init` (templates are now bundled in the wheel).
 - Six unused root template files (`plan-template.md`, `spec-template.md`, `tasks-template.md`, `agent-file-template.md`, `checklist-template.md`, `tagging-constraint-template.md`) and ten helper scripts (`setup-plan.sh/.ps1`, `create-new-feature.sh/.ps1`, `update-agent-context.sh/.ps1`, `check-prerequisites.sh/.ps1`, `common.sh/.ps1`) that fed them. None were referenced by any current InfraKit prompt.
+- **GitHub Pages docs deployment workflow** (`.github/workflows/docs.yml`). DocFX → Pages deploys are retired; `docs/` is left in place for local builds. The `github-pages` GitHub environment is now orphaned and can be deleted from repo Settings → Environments.
+- **`.infrakit_terraform_contract.md`** as a maintained artifact. The per-resource Terraform contract file is no longer written alongside generated code; resource context lives in `.infrakit/context.md` and the code itself.
 
 ### Added
 
