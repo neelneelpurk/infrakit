@@ -785,7 +785,7 @@ def version():
         except Exception:
             pass
 
-    repo_owner = "github"
+    repo_owner = "neelneelpurk"
     repo_name = "infrakit"
     api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
 
