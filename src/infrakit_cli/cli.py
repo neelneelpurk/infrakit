@@ -14,7 +14,6 @@ import os
 import shlex
 import shutil
 import sys
-from datetime import datetime
 from pathlib import Path
 
 import typer
@@ -28,7 +27,6 @@ from .banner import BannerGroup, show_banner
 from .bootstrap import initialize_iac_config
 from .console import console
 from .git_utils import init_git_repo, is_git_repo
-from .github_api import _github_auth_headers, client
 from .iac_config import IAC_CONFIG, get_iac_choices
 from .interactive import select_with_arrows
 from .mcp import (
@@ -785,42 +783,11 @@ def version():
         except Exception:
             pass
 
-    repo_owner = "github"
-    repo_name = "infrakit"
-    api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
-
-    template_version = "unknown"
-    release_date = "unknown"
-
-    try:
-        response = client.get(
-            api_url,
-            timeout=10,
-            follow_redirects=True,
-            headers=_github_auth_headers(),
-        )
-        if response.status_code == 200:
-            release_data = response.json()
-            template_version = release_data.get("tag_name", "unknown")
-            if template_version.startswith("v"):
-                template_version = template_version[1:]
-            release_date = release_data.get("published_at", "unknown")
-            if release_date != "unknown":
-                try:
-                    dt = datetime.fromisoformat(release_date.replace("Z", "+00:00"))
-                    release_date = dt.strftime("%Y-%m-%d")
-                except Exception:
-                    pass
-    except Exception:
-        pass
-
     info_table = Table(show_header=False, box=None, padding=(0, 2))
     info_table.add_column("Key", style="cyan", justify="right")
     info_table.add_column("Value", style="white")
 
     info_table.add_row("CLI Version", cli_version)
-    info_table.add_row("Template Version", template_version)
-    info_table.add_row("Released", release_date)
     info_table.add_row("", "")
     info_table.add_row("Python", platform.python_version())
     info_table.add_row("Platform", platform.system())
