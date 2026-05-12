@@ -72,7 +72,7 @@ Verify the install:
 infrakit version
 ```
 
-[![PyPI](https://img.shields.io/pypi/v/infrakit-cli?logo=pypi&logoColor=white&label=latest%20on%20PyPI)](https://pypi.org/project/infrakit-cli/)
+[![PyPI](https://img.shields.io/pypi/v/infrakit-cli?logo=pypi&logoColor=white&label=latest%20on%20PyPI&v=2)](https://pypi.org/project/infrakit-cli/)
 
 #### One-time usage
 
