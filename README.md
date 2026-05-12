@@ -8,12 +8,11 @@
 </p>
 
 <p align="center">
-    <a href="https://pypi.org/project/infrakit-cli/"><img src="https://img.shields.io/pypi/v/infrakit-cli?logo=pypi&logoColor=white&label=PyPI" alt="PyPI"/></a>
-    <a href="https://pypi.org/project/infrakit-cli/"><img src="https://img.shields.io/pypi/pyversions/infrakit-cli?logo=python&logoColor=white" alt="Python versions"/></a>
-    <a href="https://pypi.org/project/infrakit-cli/"><img src="https://img.shields.io/pypi/dm/infrakit-cli?logo=pypi&logoColor=white" alt="PyPI downloads"/></a>
-    <a href="https://github.com/neelneelpurk/infrakit/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/neelneelpurk/infrakit/release.yml?branch=main&logo=githubactions&logoColor=white&label=release" alt="Release status"/></a>
-    <a href="https://github.com/neelneelpurk/infrakit/blob/main/LICENSE"><img src="https://img.shields.io/github/license/neelneelpurk/infrakit" alt="License"/></a>
-    <a href="https://github.com/neelneelpurk/infrakit/stargazers"><img src="https://img.shields.io/github/stars/neelneelpurk/infrakit?style=social" alt="GitHub stars"/></a>
+    <a href="https://pypi.org/project/infrakit-cli/"><img src="https://img.shields.io/pypi/v/infrakit-cli?logo=pypi&logoColor=white&label=PyPI&v=2" alt="PyPI"/></a>
+    <a href="https://pypi.org/project/infrakit-cli/"><img src="https://img.shields.io/pypi/pyversions/infrakit-cli?logo=python&logoColor=white&v=2" alt="Python versions"/></a>
+    <a href="https://github.com/neelneelpurk/infrakit/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/neelneelpurk/infrakit/release.yml?branch=main&logo=githubactions&logoColor=white&label=release&v=2" alt="Release status"/></a>
+    <a href="https://github.com/neelneelpurk/infrakit/blob/main/LICENSE"><img src="https://img.shields.io/github/license/neelneelpurk/infrakit?v=2" alt="License"/></a>
+    <a href="https://github.com/neelneelpurk/infrakit/stargazers"><img src="https://img.shields.io/github/stars/neelneelpurk/infrakit?style=social&v=2" alt="GitHub stars"/></a>
 </p>
 
 ---
