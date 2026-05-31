@@ -12,7 +12,7 @@ No path filters. No manual steps. No release branches. No "let's wait for a free
 
 The full pipeline lives in a single workflow — [`.github/workflows/release.yml`](./.github/workflows/release.yml). Every push to `main` runs it. Each run does, in order:
 
-1. **Resolve next version.** Reads the latest git tag (e.g. `v0.1.13`), bumps the patch component (`v0.1.14`).
+1. **Resolve next version.** If `pyproject.toml`'s `version` is newer than the latest git tag, releases that exact version — this is how a minor or major bump is cut (bump pyproject, merge). Otherwise reads the latest git tag (e.g. `v0.1.13`) and bumps the patch component (`v0.1.14`).
 2. **Skip if the release already exists.** Lets the workflow re-run safely (idempotent). Every subsequent step is gated on this check.
 3. **Stamp `pyproject.toml`.** Writes the new version into the package metadata.
 4. **Build wheel + sdist** with `uv build`. Templates are force-included into the wheel via `[tool.hatch.build.targets.wheel.force-include]`.
@@ -78,17 +78,16 @@ Same workflow, same outcome: PyPI upload, GitHub Release, tag, version-bump comm
 
 ## Versioning
 
-InfraKit follows **semver-ish patch-bumping**. Each release is a patch bump (`v0.1.13` → `v0.1.14`). The minor and major numbers stay where they are until a maintainer manually tags a higher version:
+InfraKit follows **semver-ish patch-bumping**. A normal merge ships a patch bump (`v0.1.13` → `v0.1.14`), computed from the latest tag. To cut a **minor or major** release, bump the `version` in `pyproject.toml` and merge — the workflow honours a pyproject version newer than the latest tag and releases exactly that, then resumes auto patch-bumping:
 
 ```bash
-# Cut a minor release manually
-git tag v0.2.0
-git push origin v0.2.0
-# Then push a change that triggers release.yml — it picks up v0.2.0 and
-# the next auto-bumped version will be v0.2.1.
+# Cut a minor/major release: edit pyproject.toml, e.g.
+#   version = "1.0.0"
+# then commit + merge to main. The workflow releases v1.0.0 (PyPI + GitHub
+# Release + tag), and the next normal merge ships v1.0.1.
 ```
 
-Breaking changes are flagged with `!` in the commit subject (e.g. `feat(packaging)!:`) and a minor bump is cut manually before the next release.
+Breaking changes are flagged with `!` in the commit subject (e.g. `feat(packaging)!:`).
 
 ## Local sanity checks before pushing
 

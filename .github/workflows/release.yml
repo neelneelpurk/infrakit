@@ -2,7 +2,9 @@ name: Release to PyPI + GitHub
 
 # Every merge to main triggers a full release. The workflow:
 #
-# 1. Computes the next patch version from the latest git tag.
+# 1. Resolves the release version: the pyproject.toml `version` when it is newer
+#    than the latest git tag (this is how minor/major bumps are cut — bump
+#    pyproject and merge), otherwise the latest tag's patch component + 1.
 # 2. Skips if a GitHub release already exists for that version.
 # 3. Stamps the version into pyproject.toml.
 # 4. Builds the wheel + sdist with `uv build`.

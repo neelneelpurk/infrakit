@@ -161,6 +161,9 @@ test -f demo/.claude/commands/infrakit:setup.md
 ## Release
 
 Every merge to `main` auto-ships a patch release (PyPI + GitHub Release + tag)
-via `.github/workflows/release.yml`. Version in `pyproject.toml` is stamped by
-CI; do not hand-bump for normal changes. Add a CHANGELOG `[Unreleased]` entry for
-user-visible changes. Minor/major bumps are tagged manually.
+via `.github/workflows/release.yml`. For a normal change, don't hand-bump the
+version — CI computes the next patch from the latest tag and stamps it. Add a
+CHANGELOG `[Unreleased]` entry for user-visible changes. To cut a **minor/major
+release**, bump `version` in `pyproject.toml` and merge: the workflow releases
+that exact version when it's newer than the latest tag (`get-next-version.sh`),
+then resumes auto patch-bumping.

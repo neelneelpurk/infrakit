@@ -34,6 +34,8 @@ CLI/commands/docs are mutually consistent.
 
 - **Validation is now a hard gate.** `/infrakit:implement` and `/infrakit:quick_fix` no longer treat validation as a suggested next step — they must run the tool's validator (`tofu validate` / `cfn-lint` / `crossplane render` + YAML parse) and may **not** mark a track ✅ done until it passes. If the validator can't run, the track is set to ❌ blocked (or flagged unvalidated), never silently "done". The three engineer personas carry the same constraint. This makes the "provider-verified" claim enforced rather than promised.
 
+- **Release workflow honours a manual version bump.** `get-next-version.sh` now releases the `pyproject.toml` `version` when it is newer than the latest git tag (otherwise it auto-bumps the patch as before). Cutting a minor/major release is now "bump `version` in `pyproject.toml` and merge" — no manual tagging step. (See RELEASING.md.)
+
 ### Fixed
 
 - **Removed references to commands that don't exist.** The init panels, `skills.py` `SKILL_DESCRIPTIONS`, and several docs referenced `/infrakit:project_context`, `/infrakit:review_composition`, `/infrakit:validate_composition`, `/infrakit:clarify`, `/infrakit:checklist`, `/infrakit:specify_composition`, `/infrakit:plan_composition`, and `/infrakit:implement_composition` — none of which are real commands. All now reference the actual command set.
