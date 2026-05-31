@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+*Nothing yet.*
+
+## [1.0.0] - 2026-05-31
+
+First stable release. CloudFormation joins Terraform and Crossplane as a
+first-class IaC tool, validation is enforced rather than promised, the eval
+harness gives the multi-persona pipeline a measuring stick, and the
+CLI/commands/docs are mutually consistent.
+
 ### Added
 
 - **AWS CloudFormation support** — CloudFormation is now a first-class IaC tool alongside Crossplane and Terraform. `infrakit init --iac cloudformation` renders the full command set (`create_cloudformation_code`, `update_cloudformation_code`, `plan`, `implement`, `review`, `setup-coding-style`, `quick_fix`) plus a new `cloudformation-engineer` persona (registered as a Claude subagent) and a CloudFormation coding-style template. The engineer verifies every resource `Type` and property against the AWS resource-type reference before writing, enforces `NoEcho` + dynamic-reference secret handling, per-resource `Tags`, `DeletionPolicy`/`UpdateReplacePolicy` on stateful resources, and validates with `cfn-lint`. `resource_term` is `template`; required tool is the `aws` CLI with optional `cfn-lint`. A full `examples/cloudformation/` walkthrough is included.
