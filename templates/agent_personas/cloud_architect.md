@@ -52,7 +52,7 @@ A finding's severity flexes by environment. Missing Multi-AZ on a prod database 
 
 For each finding, populate this row:
 
-```
+```text
 | ID | Severity | Category | Finding | Recommendation |
 ```
 

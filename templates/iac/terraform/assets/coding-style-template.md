@@ -29,7 +29,7 @@ All Terraform engineers **MUST** follow these standards when generating infrastr
 
 **Module directory structure:**
 
-```
+```text
 [PROJECT_FILE_STRUCTURE]
 ```
 

@@ -1,0 +1,7 @@
+[
+  { "ParameterKey": "Environment", "ParameterValue": "prod" },
+  { "ParameterKey": "CostCenter", "ParameterValue": "CC-3017" },
+  { "ParameterKey": "Team", "ParameterValue": "orders" },
+  { "ParameterKey": "DataClassification", "ParameterValue": "restricted" },
+  { "ParameterKey": "NoncurrentExpirationDays", "ParameterValue": "730" }
+]

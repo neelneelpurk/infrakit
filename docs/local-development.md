@@ -128,16 +128,13 @@ python -m src.infrakit_cli init --here --ai claude --iac crossplane --ignore-age
 
 Or copy only the modified CLI portion if you want a lighter sandbox.
 
-## 9. Debug Network / TLS Skips
+## 9. Offline by Design
 
-If you need to bypass TLS validation while experimenting:
-
-```bash
-infrakit check --skip-tls
-infrakit init demo --iac crossplane --skip-tls --ai gemini --ignore-agent-tools --script ps
-```
-
-(Use only for local experimentation.)
+`infrakit init` makes **no network calls** — all prompts, personas, and templates
+ship inside the wheel and are rendered locally. There are no TLS/network flags to
+configure (the old `--skip-tls` / `--github-token` flags were removed when templates
+moved into the wheel). In fact the whole CLI is offline: `init`, `check`, `mcp`, and
+`version` make zero network calls.
 
 ## 10. Rapid Edit Loop Summary
 
@@ -163,10 +160,10 @@ rm -rf .venv dist build *.egg-info
 | Symptom | Fix |
 |---------|-----|
 | `ModuleNotFoundError: typer` | Run `uv pip install -e .` |
-| Scripts not executable (Linux) | Re-run init or `chmod +x scripts/*.sh` |
+| Template edits not showing up | Run the CLI from the source checkout so `templates_root()` uses the repo-relative `templates/`; use a fresh target dir (init won't overwrite) |
 | Git step skipped | You passed `--no-git` or Git not installed |
-| Wrong script type downloaded | Pass `--script sh` or `--script ps` explicitly |
-| TLS errors on corporate network | Try `--skip-tls` (not for production) |
+| Wrong script type rendered | Pass `--script sh` or `--script ps` explicitly |
+| IaC tool reported missing by `infrakit check` | Install the tool (`kubectl` / `terraform` / `aws` / `cfn-lint`) or ignore if optional |
 
 ## 13. Next Steps
 

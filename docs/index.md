@@ -10,7 +10,7 @@ InfraKit is [spec-kit](https://github.com/github/spec-kit) for infrastructure-as
 
 Each infrastructure resource gets its own **track** under `.infrakit_tracks/tracks/`, containing the spec, plan, and auto-generated task list. Multiple tracks can run in parallel, and every step is transparent and user-controlled.
 
-InfraKit supports **Crossplane** (Kubernetes-native IaC) and **Terraform** (HashiCorp IaC). Support for Pulumi, CloudFormation, and OpenTofu is on the roadmap.
+InfraKit supports **Crossplane** (Kubernetes-native IaC), **Terraform** (HashiCorp IaC), and **AWS CloudFormation**. Support for Pulumi and OpenTofu is on the roadmap.
 
 ## Getting Started
 
@@ -44,7 +44,7 @@ InfraKit uses four specialized AI personas, each with a distinct scope:
 | **Cloud Solutions Engineer** | Gathers requirements, writes spec | Phase 1 |
 | **Cloud Architect** | Reviews architecture, reliability, cost | Phase 2 |
 | **Cloud Security Engineer** | Audits against compliance frameworks (SOC2, HIPAA, etc.) | Phase 2.5 |
-| **IaC Engineer** | Implements spec to verified Crossplane/Terraform code | Phase 3 |
+| **IaC Engineer** | Implements spec to verified Crossplane / Terraform / CloudFormation code | Phase 3 |
 
 ## Contributing
 

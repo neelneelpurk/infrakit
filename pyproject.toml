@@ -53,12 +53,8 @@ dependencies = [
     "typer",
     "click>=8.1",
     "rich",
-    "httpx[socks]",
-    "platformdirs",
     "readchar",
-    "truststore>=0.10.4",
     "pyyaml>=6.0",
-    "packaging>=23.0",
 ]
 
 [project.urls]
@@ -94,6 +90,7 @@ include = [
     "templates/**",
     "examples/**",
     "tests/**",
+    "evals/**",
     "README.md",
     "CHANGELOG.md",
     "pyproject.toml",

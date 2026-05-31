@@ -71,7 +71,7 @@ For each resource required by the spec:
 
 1. Identify the correct Terraform provider (e.g., `hashicorp/aws`, `hashicorp/azurerm`, `hashicorp/google`)
 2. Look up the correct resource type and its arguments using:
-   ```
+   ```text
    search_web("site:registry.terraform.io/providers/hashicorp/<provider>/latest/docs/resources/<resource_type>")
    ```
    Example: `search_web("site:registry.terraform.io hashicorp/aws aws_db_instance arguments")`
@@ -157,7 +157,7 @@ Write to `.infrakit_tracks/tracks/<track-name>/plan.md`:
 ├── outputs.tf       # Output value declarations
 ├── versions.tf      # Required providers and Terraform version
 └── README.md        # Usage documentation
-```
+```text
 
 ## Input Variables Design
 

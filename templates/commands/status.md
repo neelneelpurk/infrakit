@@ -4,8 +4,12 @@ argument-hint: "[optional: filter by status e.g. 'in-progress' or track name pat
 handoffs:
   - label: "Implement a Track"
     agent: "infrakit:implement"
-  - label: "Create New Composition"
+  - label: "Create New Composition (Crossplane)"
     agent: "infrakit:new_composition"
+  - label: "Create New Module (Terraform)"
+    agent: "infrakit:create_terraform_code"
+  - label: "Create New Template (CloudFormation)"
+    agent: "infrakit:create_cloudformation_code"
 ---
 
 ## User Input
@@ -53,7 +57,7 @@ Also read `.infrakit/context.md` if it exists to get project name and cloud prov
 
 Output a formatted status dashboard:
 
-```
+```text
 # InfraKit Status Dashboard
 
 Project: <project_name> | Provider: <cloud_provider> | Date: <YYYY-MM-DD>
@@ -98,7 +102,7 @@ For each in-progress track:
 ## Suggested Next Actions
 
 <Based on current state:>
-- No tracks → Run /infrakit:new_composition to create a new resource
+- No tracks → Run your IaC tool's create command (/infrakit:new_composition, /infrakit:create_terraform_code, or /infrakit:create_cloudformation_code), or /infrakit:quick_fix for the fast path
 - Spec-generated tracks → Run /infrakit:plan <track-name>
 - Planned tracks → Run /infrakit:implement <track-name>
 - In-progress tracks → Run /infrakit:implement <track-name> to continue
@@ -122,4 +126,5 @@ If no tracks are registered yet:
 >
 > Run the resource creation command for your IaC tool:
 > - Crossplane: `/infrakit:new_composition`
-> - Terraform: `/infrakit:create_terraform_code`"
+> - Terraform: `/infrakit:create_terraform_code`
+> - CloudFormation: `/infrakit:create_cloudformation_code`"

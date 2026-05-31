@@ -152,13 +152,29 @@ If a task appears to conflict with coding standards, flag it **before** writing:
 
 ---
 
-## Step 8: Post-Implementation Summary
+## Step 8: Validation Gate (MANDATORY — blocks completion)
 
-After all tasks are marked `[x]`:
+After all tasks are marked `[x]`, you **MUST** validate the generated code before writing any artifacts (Step 9) or marking the track done (Step 10). This is a hard gate, not a suggestion: InfraKit's promise is *provider-verified* code, and an unvalidated module does not satisfy it. A hallucinated argument name surfaces here — that is the whole point of the gate.
 
-> "✅ All tasks complete for track `<track-name>`.
+Run from the module directory:
+
+```bash
+tofu -chdir=<module_dir> fmt -check
+tofu -chdir=<module_dir> init -backend=false
+tofu -chdir=<module_dir> validate
+```
+
+(Use `terraform` if `tofu` is unavailable.)
+
+- **Pass** → continue to Step 9.
+- **Fail** → fix the generated code and re-run. Do **not** proceed until it passes.
+- **Validator unavailable** (no `tofu`/`terraform` on PATH) → do **not** mark the track ✅ done and do **not** claim the code is validated. Set the track status to ❌ blocked, tell the user the exact commands to run, and stop. A silent "looks good" is the failure mode this gate exists to prevent.
+
+Once validation passes:
+
+> "✅ All tasks complete and `tofu validate` passes for track `<track-name>`.
 >
-> **Suggested next step**: Run `/infrakit:review <module-directory>` to review the implementation against coding standards."
+> **Next step**: Run `/infrakit:review <module-directory>` to review the implementation against coding standards."
 
 ---
 
@@ -273,6 +289,8 @@ Present the regenerated README to the user:
 ---
 
 ## Step 10: Update Track Registry
+
+Only mark the track ✅ done if the Step 8 validation gate **passed**. If validation could not run (validator unavailable) or failed, set the status to ❌ blocked instead and surface why — never mark an unvalidated module as done.
 
 Update `.infrakit_tracks/tracks.md` — change the track's status to `✅ done`.
 

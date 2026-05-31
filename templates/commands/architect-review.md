@@ -46,7 +46,7 @@ Verify required files exist:
 **HALT**
 
 **If spec.md is missing:**
-> "❌ `spec.md` not found. Run `/infrakit:new_composition <track-name>` to create the spec."
+> "❌ `spec.md` not found. Run your IaC tool's spec command to create it — `/infrakit:new_composition` (Crossplane), `/infrakit:create_terraform_code` (Terraform), or `/infrakit:create_cloudformation_code` (CloudFormation) — with `<track-name>`."
 **HALT**
 
 **If plan.md is missing:**
@@ -141,7 +141,7 @@ Scoring: HIGH = 10 pts, MEDIUM = 3 pts, LOW = 1 pt
 
 ## Step 6: Present Architecture Review Report
 
-```
+```text
 # Architecture Review Report: <track-name>
 
 **Date**: <YYYY-MM-DD>

@@ -9,6 +9,7 @@
 - [Git](https://git-scm.com/downloads)
 - `kubectl` (for Crossplane projects)
 - `terraform` (for Terraform projects)
+- `aws` CLI, and optionally `cfn-lint` (for CloudFormation projects)
 
 ---
 
@@ -80,26 +81,31 @@ ls .github/prompts/ | grep infrakit
 
 You should see the following commands available in your AI agent:
 
-**Generic:**
-- `/infrakit:setup` — Configure project context, coding standards, and tagging requirements
+**Generic (shared by every IaC tool):**
+- `/infrakit:setup` — Configure project context and tagging requirements
+- `/infrakit:setup-coding-style` — Configure IaC coding-style standards
 - `/infrakit:status` — Track progress dashboard
-- `/infrakit:analyze` — Spec/plan consistency check
-- `/infrakit:implement` — Execute implementation tasks
+- `/infrakit:analyze` — Spec/plan/code consistency check
 - `/infrakit:architect-review` — Architecture review
 - `/infrakit:security-review` — Security compliance review
-- `/infrakit:checklist` — Generate verification checklist
+
+**Shared workflow (per IaC tool):**
+- `/infrakit:plan` — Generate the implementation plan and auto-generate `tasks.md`
+- `/infrakit:implement` — Execute the tasks in `tasks.md`
+- `/infrakit:review` — Code review against coding standards
+- `/infrakit:quick_fix` — Fast path: IaC Engineer writes/updates code directly
 
 **Crossplane:**
 - `/infrakit:new_composition` — Multi-persona new resource workflow
 - `/infrakit:update_composition` — Update an existing composition
-- `/infrakit:plan` — Generate implementation plan
-- `/infrakit:review` — Code review against coding standards
 
 **Terraform:**
 - `/infrakit:create_terraform_code` — Multi-persona new resource workflow
-- `/infrakit:update_terraform_code` — Update existing module
-- `/infrakit:plan` — Generate HCL implementation plan
-- `/infrakit:review` — Code review against coding standards
+- `/infrakit:update_terraform_code` — Update an existing module
+
+**CloudFormation:**
+- `/infrakit:create_cloudformation_code` — Multi-persona new resource workflow
+- `/infrakit:update_cloudformation_code` — Update an existing template
 
 ---
 
@@ -111,11 +117,11 @@ After initialization, run `/infrakit:setup` in your AI agent to configure:
 2. **Coding standards** — Pipeline mode requirements, connection secrets, patch patterns
 3. **Tagging requirements** — required tags, enforcement rules, provider-specific field paths
 
-```
+```text
 /infrakit:setup
 ```
 
-This creates `.infrakit/context.md`, `.infrakit/coding-style.md`, and `.infrakit/tagging.md` — the files that all InfraKit commands read before generating or reviewing code.
+`/infrakit:setup` writes `.infrakit/context.md` and `.infrakit/tagging-standard.md`; `/infrakit:setup-coding-style` fills in `.infrakit/coding-style.md`. Together these are the files that all InfraKit commands read before generating or reviewing code.
 
 ---
 

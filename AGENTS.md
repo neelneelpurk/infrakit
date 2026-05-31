@@ -2,7 +2,7 @@
 
 ## About InfraKit
 
-**InfraKit** is [spec-kit](https://github.com/github/spec-kit) for infrastructure-as-code, with a multi-persona pipeline layered on top. It captures the spec for an IaC change first, routes it through four specialized personas (Cloud Solutions Engineer → Cloud Architect → Cloud Security Engineer → IaC Engineer), and then generates Crossplane YAML or Terraform HCL — with the full audit trail committed to git alongside the code.
+**InfraKit** is [spec-kit](https://github.com/github/spec-kit) for infrastructure-as-code, with a multi-persona pipeline layered on top. It captures the spec for an IaC change first, routes it through four specialized personas (Cloud Solutions Engineer → Cloud Architect → Cloud Security Engineer → IaC Engineer), and then generates Crossplane YAML, Terraform HCL, or an AWS CloudFormation template — with the full audit trail committed to git alongside the code.
 
 **InfraKit CLI** is the command-line interface that bootstraps projects with the InfraKit framework. It sets up the necessary directory structures, templates, and AI agent integrations to support the spec-driven workflow.
 

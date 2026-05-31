@@ -1,0 +1,37 @@
+# CloudFormation profile — fills the {{TOKENS}} in shared command skeletons under
+# templates/iac/_shared/commands/.
+
+ENGINEER: "CloudFormation Engineer"
+ENGINEER_PERSONA: "cloudformation_engineer"
+OUTPUT: "a working CloudFormation template"
+RESOURCE_TERM: "template"
+ARG_HINT_DIR: "template-directory"
+CREATE_CMD: "create_cloudformation_code"
+UPDATE_CMD: "update_cloudformation_code"
+NEW_FILES: "`template.yaml`, example `parameters/*.json`, and `README.md`"
+EXISTING_FILES: "a `template.yaml`"
+SCHEMA_SOURCE: "the AWS resource-type reference (docs.aws.amazon.com)"
+SCHEMA_QUERY: "WebSearch site:docs.aws.amazon.com/AWSCloudFormation aws-resource-<service>-<type>"
+SCHEMA_CONFIRM: "the exact resource `Type`, its required/optional properties and value types, the `Fn::GetAtt` attributes for outputs, and whether the type supports `Tags`"
+BREAKING_NOTE: "If you discover the change forces replacement of a stateful resource, **stop and warn** before writing — that is breaking-change territory and belongs in `/infrakit:update_cloudformation_code`."
+VALIDATE_SUMMARY: "cfn-lint <passed/skipped>, validate-template <passed/skipped>"
+ERR_SCHEMA: "Resource type/property unknown | Look it up in the AWS resource-type reference; never guess"
+ERR_BREAKING: "Change forces stateful-resource replacement | Stop, warn, recommend `/infrakit:update_cloudformation_code`"
+ERR_SECRET: "Hardcoded secret required by requirement | Refuse — use a `NoEcho` parameter or a dynamic reference"
+
+IMPLEMENT_RULES: |
+  - `AWSTemplateFormatVersion: "2010-09-09"` + a `Description`.
+  - Parameters with `Type`, `Description`, constraints, and `NoEcho: true` for secrets.
+  - Required tags from `.infrakit/tagging-standard.md` on every taggable resource, sourced from parameters / pseudo params (never hardcoded).
+  - No hardcoded secrets (use `NoEcho` + dynamic references); no hardcoded account IDs / regions / ARNs (use pseudo params).
+  - Public access / open ingress closed by default; any exposure gated by a `Parameter` + `Condition`.
+  - Encryption at rest for storage resources; `DeletionPolicy` / `UpdateReplacePolicy` on stateful resources.
+  - Outputs with `Description`; `Export` only when cross-stack consumption is needed.
+
+VALIDATE_BLOCK: |
+  ```bash
+  cfn-lint <template_dir>/template.yaml
+  aws cloudformation validate-template --template-body file://<template_dir>/template.yaml   # if credentials available
+  ```
+
+  If `cfn-lint` is not installed, fall back to a YAML syntax check and note that schema-level validation was skipped.

@@ -1,0 +1,24 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: DELIBERATELY INSECURE — eval negative fixture. Do NOT deploy.
+
+# Valid YAML (so the validator/syntax check passes) but violates every
+# secure-default: public, unencrypted, hardcoded MasterUserPassword, untagged,
+# no versioning, DeletionPolicy defaults to Delete.
+
+Resources:
+  BadBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: my-totally-public-bucket
+      AccessControl: PublicRead
+
+  BadDatabase:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      Engine: postgres
+      DBInstanceClass: db.t3.micro
+      AllocatedStorage: "20"
+      MasterUsername: admin
+      MasterUserPassword: hunter2
+      PubliclyAccessible: true

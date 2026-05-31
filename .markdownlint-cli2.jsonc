@@ -12,6 +12,12 @@
     "MD024": {
       "siblings_only": true
     },
+    // MD031/MD032 are disabled on purpose: InfraKit's slash-command templates are
+    // dense LLM prompts that deliberately pack `> Examples:` blockquotes with
+    // `> - ...` lists and fenced blocks without surrounding blank lines. Enforcing
+    // blanks-around everything would bloat every prompt for no functional gain.
+    "MD031": false,
+    "MD032": false,
     "MD033": false,
     "MD041": false,
     "MD049": {
@@ -21,9 +27,19 @@
       "style": "asterisk"
     },
     "MD036": false,
+    // MD055/MD056 are disabled because the coding-style asset templates intentionally
+    // put a `[PROJECT_SPECIFIC_TAGS]` placeholder on its own line inside a markdown
+    // table; `/infrakit:setup-coding-style` replaces it with real rows at runtime.
+    "MD055": false,
+    "MD056": false,
     "MD060": false
   },
   "ignores": [
-    ".genreleases/"
+    ".genreleases/",
+    ".venv/",
+    "node_modules/",
+    ".pytest_cache/",
+    "dist/",
+    "build/"
   ]
 }

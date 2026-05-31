@@ -20,7 +20,7 @@ when generating infrastructure code.
 
 **Module directory structure** (in `infra-modules` repo):
 
-```
+```text
 modules/
   s3-secure-bucket/
     main.tf
@@ -38,7 +38,7 @@ modules/
 
 **Live config structure** (in `terraform-live` repo):
 
-```
+```text
 terraform-live/
   prod/
     orders/

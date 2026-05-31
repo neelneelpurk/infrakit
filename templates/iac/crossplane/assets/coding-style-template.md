@@ -29,7 +29,7 @@ All Crossplane engineers **MUST** follow these standards when generating infrast
 
 **Project directory structure:**
 
-```
+```text
 [PROJECT_FILE_STRUCTURE]
 ```
 

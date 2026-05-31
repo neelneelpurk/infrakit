@@ -28,7 +28,7 @@ only; product accounts have no direct cross-account trust with each other.
 
 **Organization Hierarchy:**
 
-```
+```text
 Root OU (Acme Corp)
 └── Platform OU
     ├── shared-services  (Transit Gateway, Route53 private zones, Datadog, tooling)

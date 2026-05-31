@@ -89,7 +89,7 @@ The key is treating specifications as the source of truth, with code as the gene
 
 The SDD methodology is significantly enhanced through InfraKit's infrastructure-native commands that automate the specification → planning → implementation → review → validation workflow:
 
-### The `/infrakit:specify_composition` Command
+### The `/infrakit:new_composition` Command
 
 This command transforms a natural language infrastructure description into a complete, structured resource specification:
 
@@ -98,7 +98,7 @@ This command transforms a natural language infrastructure description into a com
 3. **Template-Based Generation**: Produces a structured `spec.md` capturing what the resource must do before any YAML is written
 4. **Project Context Alignment**: Ensures the spec complies with the project's governing infrastructure principles
 
-### The `/infrakit:plan_composition` Command
+### The `/infrakit:plan` Command
 
 Once a specification exists, this command creates a Crossplane architecture plan:
 
@@ -127,18 +127,17 @@ Total: ~13 hours of YAML authoring
 
 ```bash
 # Step 1: Create the resource specification (5 minutes)
-/infrakit:specify_composition I need a managed PostgreSQL database with dev and prod sizing, encryption at rest, and connection details exposed as a Kubernetes secret.
+/infrakit:new_composition I need a managed PostgreSQL database with dev and prod sizing, encryption at rest, and connection details exposed as a Kubernetes secret.
 
 # Step 2: Architecture review + plan (5 minutes)
 # tasks.md is auto-generated at the end of this step
-/infrakit:plan_composition
+/infrakit:plan <track-name>
 
 # Step 3: Generate Crossplane YAML
-/infrakit:implement_composition
+/infrakit:implement <track-name>
 
-# Step 4: Review and validate
-/infrakit:review_composition
-/infrakit:validate_composition
+# Step 4: Review against coding standards (validation runs inside implement/review)
+/infrakit:review <resource-directory>
 ```
 
 In 30 minutes, you have:

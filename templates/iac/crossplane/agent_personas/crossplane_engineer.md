@@ -51,7 +51,7 @@ You convert an approved `spec.md` into a Crossplane composition: `definition.yam
 
 `doc.crds.dev` indexes the Go types from every Crossplane provider — it's the authoritative source. The pattern is:
 
-```
+```text
 WebSearch site:doc.crds.dev upbound provider-aws-rds rds.aws.upbound.io Instance v1beta1
 ```
 
@@ -259,5 +259,5 @@ If your project also runs Kyverno or other admission policies in CI, mention the
 - Never hardcode credentials, tag values, or region/account literals.
 - Always tag every managed resource with the 3 Crossplane-mandatory keys plus the project's required keys.
 - Always make XRD `connectionSecretKeys` and Composition `connectionDetails` match.
-- Always validate YAML before claiming completion.
+- Validation is a hard gate: never claim completion, and never let a track be marked done, without the YAML parsing cleanly (and `crossplane render` passing when it can run). If validation can't run, say so and treat the work as unvalidated/blocked — never imply it was verified.
 - Walk `tasks.md` in order if present, marking checkboxes as you go.

@@ -176,7 +176,7 @@ Required tag keys (per tagging-standard.md):
 
 ## Step 6: Present Code Review Report
 
-```
+```text
 # Terraform Code Review: <module-directory>
 
 **Date**: <YYYY-MM-DD>

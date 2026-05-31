@@ -273,8 +273,8 @@ class TestTerraformIacConfigValues:
         assert "terraform" in IAC_CONFIG["terraform"]["requires_tools"]
 
     def test_terraform_iac_commands_count(self):
-        """Terraform must have exactly 6 IaC-native commands."""
-        assert len(IAC_CONFIG["terraform"]["iac_commands"]) == 6
+        """Terraform must have exactly 7 IaC-native commands."""
+        assert len(IAC_CONFIG["terraform"]["iac_commands"]) == 7
 
     def test_all_iac_tools_distinct_output_formats(self):
         """Crossplane (yaml) and Terraform (hcl) have distinct output formats."""
