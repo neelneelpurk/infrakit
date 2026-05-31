@@ -26,8 +26,7 @@ COMMAND_FILES = [
     "review.md",
     "implement.md",
     "setup-coding-style.md",
-    # quick_fix is a SHARED skeleton (templates/iac/_shared/commands/quick_fix.md)
-    # rendered per-tool from profile.yaml; it is covered by tests/test_shared_commands.py.
+    "quick_fix.md",
 ]
 
 
@@ -210,6 +209,37 @@ class TestCloudFormationReviewCommand:
     def test_references_severity_levels(self, content):
         assert "CRITICAL" in content
         assert "HIGH" in content
+
+
+class TestCloudFormationQuickFixCommand:
+    @pytest.fixture
+    def content(self):
+        return _read(CFN_TEMPLATES_DIR / "commands" / "quick_fix.md")
+
+    def test_adopts_engineer_persona(self, content):
+        assert "CloudFormation Engineer" in content
+        assert "cloudformation_engineer.md" in content
+
+    def test_flow_is_plan_tasks_review_implement(self, content):
+        lowered = content.lower()
+        assert "plan.md" in content
+        assert "tasks.md" in content
+        assert "review" in lowered
+        assert "implement" in lowered
+
+    def test_creates_a_track(self, content):
+        assert "tracks.md" in content
+        assert "quickfix" in content.lower()
+
+    def test_recommends_full_pipeline(self, content):
+        assert "create_cloudformation_code" in content
+
+    def test_validation_is_a_gate(self, content):
+        assert "cfn-lint" in content.lower()
+        assert "MANDATORY" in content or "blocks completion" in content
+
+    def test_verifies_schemas(self, content):
+        assert "never guess" in content.lower() or "verify" in content.lower()
 
 
 class TestCloudFormationAssets:

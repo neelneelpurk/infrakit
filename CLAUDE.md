@@ -18,8 +18,9 @@ time — there are **no network calls** during init.
 The end-user workflow the templates drive:
 `setup` → spec (`new_composition` / `create_terraform_code` / `create_cloudformation_code`)
 → `plan` (auto-generates `tasks.md`) → `implement` → `review`, with optional
-`analyze` / `architect-review` / `security-review`. A lighter one-shot path is
-`quick_fix` (IaC Engineer persona only, no spec/plan ceremony).
+`analyze` / `architect-review` / `security-review`. A lighter path is `quick_fix`:
+the IaC Engineer plans from a requirement, generates `tasks.md`, gets the user's
+review, then implements — skipping the multi-persona spec/architect/security ceremony.
 
 The four personas: **Cloud Solutions Engineer** (spec) → **Cloud Architect**
 (architecture review) → **Cloud Security Engineer** (compliance review) → **IaC
@@ -63,11 +64,7 @@ behavioural change to the CLI requires a version note in CHANGELOG.md.
 
 1. Render `IAC_CONFIG[tool]["generic_commands"]` from `templates/commands/` and
    `IAC_CONFIG[tool]["iac_commands"]` from `templates/iac/<tool>/commands/` into
-   the agent's commands dir, named `infrakit:<stem><ext>`. An IaC command not
-   found in the tool's own `commands/` falls back to a **shared skeleton** at
-   `templates/iac/_shared/commands/<stem>.md`, with `{{TOKEN}}` placeholders
-   filled from `templates/iac/<tool>/profile.yaml` (see `load_profile`). This is
-   how boilerplate-heavy commands live in one place; `quick_fix` is the example.
+   the agent's commands dir, named `infrakit:<stem><ext>`.
 2. Copy generic personas + `templates/iac/<tool>/agent_personas/` into
    `.infrakit/agent_personas/`.
 3. Per-agent extras: Copilot prompt pairs, VS Code settings, and — for Claude —
@@ -86,14 +83,10 @@ When you add/rename/remove a command or IaC tool, update **all** of these:
 1. **`iac_config.py`** — `generic_commands` / `iac_commands` lists. A command
    only renders if its stem is listed here. `generic_commands` must be identical
    across all IaC tools (a test enforces this); `iac_commands` must differ.
-2. **The template file** must exist at `templates/commands/<stem>.md` (generic),
-   `templates/iac/<tool>/commands/<stem>.md` (IaC-native), or — for a command
-   shared across tools — `templates/iac/_shared/commands/<stem>.md` (a skeleton
-   with `{{TOKEN}}` placeholders). YAML frontmatter: `description:`,
-   `argument-hint:`, optional `handoffs:`. Body must contain the `$ARGUMENTS`
-   placeholder. A shared skeleton's tokens **must all be provided by every
-   tool's `profile.yaml`** — `tests/test_shared_commands.py` enforces this, so
-   adding a token without updating all profiles fails CI.
+2. **The template file** must exist at `templates/commands/<stem>.md` (generic)
+   or `templates/iac/<tool>/commands/<stem>.md` (IaC-native), with YAML
+   frontmatter: `description:`, `argument-hint:`, optional `handoffs:`. Body must
+   contain the `$ARGUMENTS` placeholder.
 3. **Command `handoffs:` and prose cross-references** must point to commands that
    actually exist for that tool (e.g. don't reference `new_composition` from a
    terraform command).
@@ -115,23 +108,21 @@ When you add/rename/remove a command or IaC tool, update **all** of these:
 
 ## Conventions
 
-- **Per-IaC commands: shared skeleton vs. per-tool file.** `quick_fix` is a
-  single **shared skeleton** (`templates/iac/_shared/commands/quick_fix.md`)
-  rendered per-tool from `profile.yaml` — it was nearly identical across tools,
-  so one skeleton + a per-tool data block kills the drift. `plan`, `implement`,
-  `review`, `setup-coding-style`, and the create/update commands remain
-  duplicated per IaC tool **on purpose**: their bodies are genuinely
-  tool-specific (different design tables, checks, questions, artifact shapes), so
-  a shared skeleton would need giant tokens — a worse abstraction than the
-  duplication. When a per-tool command is mostly boilerplate, move it to
-  `_shared/` + profile; otherwise keep it per-tool. Generic commands (`setup`,
-  `status`, `analyze`, `architect-review`, `security-review`) are shared.
-- **Adding a new IaC tool** needs a `templates/iac/<tool>/profile.yaml` providing
-  every token used by the shared skeletons (the test above enforces completeness).
+- **Per-IaC duplication is expected.** `plan`, `implement`, `review`,
+  `setup-coding-style`, `quick_fix`, and the create/update commands are
+  duplicated per IaC tool because the persona, file types, schema-lookup source,
+  artifact shapes, and validation commands genuinely differ. Each lives at
+  `templates/iac/<tool>/commands/<stem>.md`. Generic commands (`setup`, `status`,
+  `analyze`, `architect-review`, `security-review`) are shared in
+  `templates/commands/`.
 - **Validation is a hard gate.** `implement` and `quick_fix` must not mark a track
   done until the tool's validator (`tofu validate` / `cfn-lint` / `crossplane
   render` / YAML parse) passes; if it can't run, the track is blocked, not done.
   The engineer personas carry the same constraint. Don't soften this to "suggested".
+- **`quick_fix` is the lighter path**, per IaC tool: requirement → `plan.md` +
+  `tasks.md` → user review → implement (+ the validation gate). It skips the
+  multi-persona spec/architect/security ceremony but still creates a `quick` track
+  for the audit trail.
 - **The IaC Engineer verifies every field against authoritative docs before
   writing.** Terraform → `registry.terraform.io`; Crossplane → `doc.crds.dev`;
   CloudFormation → AWS resource-type reference / `aws-documentation` MCP. "Never

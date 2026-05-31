@@ -51,7 +51,7 @@ SKILL_DESCRIPTIONS = {
     "plan": "Generate an implementation plan and auto-generate tasks.md from a track's approved spec. The IaC Engineer verifies provider/resource field names against the official docs before writing the plan — never guessing.",
     "implement": "Execute a track's tasks.md: write the actual IaC code, mark each task complete, then write the per-resource artifacts (.infrakit_context.md, .infrakit_changelog.md, README.md).",
     "review": "Review generated IaC code against the project's coding-style and tagging standards. Findings are categorized CRITICAL/HIGH/MEDIUM/LOW with fixes offered for approval.",
-    "quick_fix": "Fast path: hand a requirement straight to the IaC Engineer persona to write or update code directly, skipping the spec/plan/review pipeline. Still verifies provider schemas, applies required tags, and validates the output.",
+    "quick_fix": "Lighter path: from a requirement, the IaC Engineer plans, generates a task list, presents plan.md + tasks.md for your review, then implements — skipping the multi-persona spec/architect/security ceremony. Still verifies provider schemas, applies required tags, and gates completion on validation.",
     # --- Crossplane-specific ---
     "new_composition": "(Crossplane) Start a new XR/Composition through the Solutions Engineer → Cloud Architect → Cloud Security Engineer pipeline. Produces a confirmed spec.md ready for /infrakit:plan.",
     "update_composition": "(Crossplane) Update an existing Composition: scan the current YAML, classify the change (additive/behavioral/breaking), run the multi-persona review, and produce an updated spec (plus migration.md if breaking).",

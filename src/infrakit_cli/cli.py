@@ -565,9 +565,9 @@ def init(
     )
     n += 1
 
-    steps_lines.append(f"{n}. …or take the fast path:")
+    steps_lines.append(f"{n}. …or take the lighter path:")
     steps_lines.append(
-        "   • [cyan]/infrakit:quick_fix[/] - IaC Engineer writes/updates code directly"
+        "   • [cyan]/infrakit:quick_fix[/] - Requirement → plan → tasks → review → implement"
     )
     n += 1
 

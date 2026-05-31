@@ -43,7 +43,7 @@ InfraKit is **[spec-kit](https://github.com/github/spec-kit) for infrastructure-
 
 Concretely: a **Cloud Solutions Engineer** persona translates intent into a structured spec. A **Cloud Architect** presents 2–3 design options with cost/reliability trade-offs. A **Cloud Security Engineer** flags structural patterns that commonly violate SOC 2, HIPAA, ISO 27001, CIS, and NIST controls *before any code is written*. An **IaC Engineer** then generates Crossplane YAML, Terraform HCL, or a CloudFormation template — and a full audit trail (spec, plan, task list, changelog) lands alongside the code in git.
 
-In a hurry? The lighter **`/infrakit:quick_fix`** path hands your requirement straight to the IaC Engineer — it writes or updates the code directly (still verifying provider field names, applying required tags, and validating) without the full spec → plan → review ceremony.
+In a hurry? The lighter **`/infrakit:quick_fix`** path skips the multi-persona spec ceremony: the IaC Engineer plans your requirement, generates a task list, shows you the plan to approve, then implements (still verifying provider field names, applying required tags, and gating on validation).
 
 > **A note on compliance**: the security review is a heuristic LLM pass that flags common control violations against named frameworks. It is **not** a substitute for a real audit conducted by qualified humans with evidence collection. Use it as a first-pass guardrail, not as your compliance system of record.
 
@@ -133,7 +133,7 @@ Describe **what** you want, not **how**. The Solutions Engineer iterates until t
 
 The four-persona pipeline runs end-to-end. Output: a confirmed `spec.md` in `.infrakit_tracks/tracks/<track-name>/`.
 
-> **In a hurry?** Skip the pipeline with **`/infrakit:quick_fix <requirement> [directory]`** — the IaC Engineer writes or updates the code directly. It still verifies provider field names, applies your required tags, and validates the output; it just skips the spec/architect/security review. Reach for the full pipeline above when the change is compliance-sensitive or a new design with real trade-offs.
+> **In a hurry?** **`/infrakit:quick_fix <requirement> [directory]`** runs a lighter loop — the IaC Engineer plans your requirement, generates a task list, shows you `plan.md` + `tasks.md` to approve, then implements (verifying field names, applying tags, gating on validation). It skips only the multi-persona spec/architect/security review. Reach for the full pipeline above when the change is compliance-sensitive or a new design with real trade-offs.
 
 ### 5. Plan the implementation
 
@@ -205,7 +205,7 @@ Essential commands for the spec-driven workflow:
 | `/infrakit:plan`                     | Generate the implementation plan and auto-generate `tasks.md`                              |
 | `/infrakit:implement`                | Execute tasks from `tasks.md`, mark complete, write context / changelog / README           |
 | `/infrakit:review`                   | Review generated code against coding standards and tagging                                 |
-| `/infrakit:quick_fix`          | Fast path: IaC Engineer writes/updates code directly from a requirement (no spec/plan)     |
+| `/infrakit:quick_fix`          | Lighter path: requirement → IaC Engineer plans, generates tasks, you review, then implements |
 
 ### Brownfield Commands
 
@@ -539,7 +539,6 @@ mv .infrakit/tracks.md .infrakit_tracks/tracks.md
 | [Quick Start Guide](./docs/quickstart.md)                      | End-to-end Crossplane workflow walkthrough                                               |
 | [Installation Guide](./docs/installation.md)                   | Detailed installation, upgrades, and corporate-proxy setup                               |
 | [Upgrade Guide](./docs/upgrade.md)                              | How to upgrade the CLI and update project template files                                 |
-| [Methodology notes](./constraint-driven.md)                    | Deeper notes on the multi-persona pipeline and how it extends spec-driven development    |
 | [Examples](./examples/)                                        | Full Terraform, Crossplane, and CloudFormation walkthroughs                              |
 | [CHANGELOG](./CHANGELOG.md)                                    | Full version history and breaking changes                                                |
 | [CONTRIBUTING](./CONTRIBUTING.md)                              | How to contribute to InfraKit                                                            |

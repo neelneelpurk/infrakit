@@ -77,10 +77,11 @@ Once the spec is confirmed:
 
 `<track-name>` follows the format `s3-secure-bucket-<YYYYMMDD-HHMMSS>`.
 
-> **Fast path:** for a routine change you can skip the pipeline entirely:
+> **Lighter path:** for a routine change you can skip the multi-persona spec ceremony:
 > `/infrakit:quick_fix Add server access logging to ./templates/s3-secure-bucket`.
-> The CloudFormation Engineer edits the template directly, verifies the property names against the
-> AWS docs, applies the required tags, and re-runs `cfn-lint`.
+> The CloudFormation Engineer plans the change, generates a task list, shows you `plan.md` +
+> `tasks.md` to approve, then implements — verifying property names against the AWS docs,
+> applying the required tags, and gating on `cfn-lint`.
 
 ### 5. Verify the produced template
 
@@ -156,4 +157,3 @@ The `.infrakit_tracks/` directory is the audit trail. Commit it to git alongside
 
 - [`examples/terraform/`](../terraform/) — the same secure-bucket scenario as a Terraform module.
 - [`examples/crossplane/`](../crossplane/) — an `XPostgreSQLInstance` Crossplane composition.
-- [Methodology notes](../../constraint-driven.md) — how the multi-persona pipeline extends spec-driven development.

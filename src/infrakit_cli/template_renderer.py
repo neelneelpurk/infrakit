@@ -94,48 +94,18 @@ def parse_description(template_text: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def render_command(
-    template_text: str,
-    *,
-    args_token: str,
-    agent: str,
-    profile: dict[str, str] | None = None,
-) -> str:
+def render_command(template_text: str, *, args_token: str, agent: str) -> str:
     """Apply the runtime substitutions to a command body.
 
-    ``{ARGS}``        → ``args_token`` (e.g. ``$ARGUMENTS`` or ``{{args}}``).
-    ``__AGENT__``     → the agent key (e.g. ``claude``, ``gemini``).
-    ``{{PROFILE_KEY}}`` → the matching value from the IaC tool's ``profile.yaml``,
-      when a ``profile`` is supplied. This lets a single shared command skeleton
-      (under ``templates/iac/_shared/commands/``) render per-tool by filling in
-      the tool's persona name, schema source, validation commands, file layout,
-      etc. — so the boilerplate lives in one place instead of N near-identical copies.
+    ``{ARGS}``      → ``args_token`` (e.g. ``$ARGUMENTS`` or ``{{args}}``).
+    ``__AGENT__``   → the agent key (e.g. ``claude``, ``gemini``).
 
     Path tokens like ``memory/``, ``scripts/``, ``templates/`` at non-anchored
     positions are rewritten under ``.infrakit/`` to match the on-disk layout
     the rest of the CLI produces.
     """
     text = template_text.replace("{ARGS}", args_token).replace("__AGENT__", agent)
-    if profile:
-        for key, value in profile.items():
-            text = text.replace("{{" + key + "}}", value)
     return _rewrite_paths(text)
-
-
-def load_profile(iac_root: Path) -> dict[str, str]:
-    """Load an IaC tool's ``profile.yaml`` (token → value) if present.
-
-    The profile supplies the per-tool substitutions for shared command skeletons.
-    Returns an empty dict when the tool has no profile (its commands are then
-    expected to be fully self-contained per-tool files).
-    """
-    import yaml
-
-    path = iac_root / "profile.yaml"
-    if not path.is_file():
-        return {}
-    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    return {str(k): str(v) for k, v in data.items()}
 
 
 def write_command(
@@ -384,11 +354,6 @@ def materialize_project(
         command_format=command_format,
         extension=command_extension,
         overwrite=overwrite,
-        # Commands not found as a tool-specific file fall back to a shared
-        # skeleton under templates/iac/_shared/commands/, filled from the tool's
-        # profile.yaml. Lets boilerplate-heavy commands live in one place.
-        fallback_dir=tpl_root / "iac" / "_shared" / "commands",
-        profile=load_profile(iac_root),
     )
 
     # --- 2. Personas: generic + IaC-specific into .infrakit/agent_personas/
@@ -434,37 +399,28 @@ def _render_command_set(
     command_format: str,
     extension: str,
     overwrite: bool,
-    fallback_dir: Path | None = None,
-    profile: dict[str, str] | None = None,
 ) -> int:
-    """Render the ``allowed`` command stems to ``dest_dir``.
-
-    Each stem resolves to ``src_dir/<stem>.md`` when present, else
-    ``fallback_dir/<stem>.md`` (the shared skeleton) when ``fallback_dir`` is
-    given. The ``profile`` fills the skeleton's ``{{TOKEN}}`` placeholders.
-    Returns the number of files written.
+    """Render the subset of ``src_dir``'s ``.md`` templates whose stem is in
+    ``allowed`` to ``dest_dir``. Returns the number of files written.
     """
+    if not src_dir.is_dir():
+        return 0
     written = 0
-    for stem in sorted(allowed):
-        template = src_dir / f"{stem}.md"
-        if not template.is_file() and fallback_dir is not None:
-            template = fallback_dir / f"{stem}.md"
-        if not template.is_file():
+    for template in sorted(src_dir.glob("*.md")):
+        if template.stem not in allowed:
             continue
-        dest_path = dest_dir / f"infrakit:{stem}{extension}"
+        dest_path = dest_dir / f"infrakit:{template.stem}{extension}"
         if dest_path.exists() and not overwrite:
             continue
         text = template.read_text(encoding="utf-8")
-        body = render_command(
-            text, args_token=args_token, agent=agent, profile=profile
-        )
+        body = render_command(text, args_token=args_token, agent=agent)
         write_command(
             body,
             dest_dir,
-            name=stem,
+            name=template.stem,
             command_format=command_format,
             extension=extension,
-            description=parse_description(body),
+            description=parse_description(text),
         )
         written += 1
     return written

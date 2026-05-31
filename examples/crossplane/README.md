@@ -160,4 +160,3 @@ The `.infrakit_tracks/` directory is the audit trail. Commit it to git alongside
 ## See also
 
 - [`examples/terraform/`](../terraform/) — the same flow against a Terraform `s3-secure-bucket` module.
-- [Methodology notes](../../constraint-driven.md) — how the multi-persona pipeline extends spec-driven development.

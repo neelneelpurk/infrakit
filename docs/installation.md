@@ -93,7 +93,7 @@ You should see the following commands available in your AI agent:
 - `/infrakit:plan` — Generate the implementation plan and auto-generate `tasks.md`
 - `/infrakit:implement` — Execute the tasks in `tasks.md`
 - `/infrakit:review` — Code review against coding standards
-- `/infrakit:quick_fix` — Fast path: IaC Engineer writes/updates code directly
+- `/infrakit:quick_fix` — Lighter path: requirement → plan → tasks → review → implement
 
 **Crossplane:**
 - `/infrakit:new_composition` — Multi-persona new resource workflow
