@@ -22,7 +22,7 @@ All Crossplane engineers **MUST** follow these standards when generating infrast
 
 **Project directory structure:**
 
-```
+```text
 apis/
   database/
     v1alpha1/

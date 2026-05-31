@@ -8,6 +8,8 @@ handoffs:
     agent: "infrakit:new_composition"
   - label: "Create New Module (Terraform)"
     agent: "infrakit:create_terraform_code"
+  - label: "Create New Template (CloudFormation)"
+    agent: "infrakit:create_cloudformation_code"
   - label: "Check Status"
     agent: "infrakit:status"
 ---
@@ -398,6 +400,8 @@ Track all infrastructure compositions and their current status.
 > - Run the appropriate "create" command for your IaC tool (based on `<iac-tool>` from `.infrakit/config.yaml`):
 >   - If `<iac-tool>` is **crossplane**: `/infrakit:new_composition`
 >   - If `<iac-tool>` is **terraform**: `/infrakit:create_terraform_code`
+>   - If `<iac-tool>` is **cloudformation**: `/infrakit:create_cloudformation_code`
+> - Or take the fast path with `/infrakit:quick_fix`
 > - Run `/infrakit:status` to see all track statuses"
 
 **Note**: Only print the line for the user's actual IaC tool. Suppress the other.

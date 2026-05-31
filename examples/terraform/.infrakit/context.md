@@ -39,7 +39,7 @@ only; product accounts have no direct cross-account trust with each other.
 
 **Organization Hierarchy:**
 
-```
+```text
 Root OU (Northwind Logistics)
 └── Platform OU
     ├── shared-services  (Transit Gateway, Route53 private zones, central CloudTrail, Atlantis)

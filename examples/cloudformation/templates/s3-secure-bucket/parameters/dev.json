@@ -1,0 +1,6 @@
+[
+  { "ParameterKey": "Environment", "ParameterValue": "dev" },
+  { "ParameterKey": "CostCenter", "ParameterValue": "CC-3017" },
+  { "ParameterKey": "Team", "ParameterValue": "analytics" },
+  { "ParameterKey": "DataClassification", "ParameterValue": "internal" }
+]

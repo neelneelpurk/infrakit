@@ -50,7 +50,7 @@ You convert an approved `spec.md` into a Terraform module: `versions.tf`, `varia
 
 The Terraform Registry is the authoritative source. The pattern is:
 
-```
+```text
 WebSearch site:registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance
 ```
 
@@ -228,5 +228,5 @@ If your project pins `tflint` or `checkov` via `coding-style.md`, run those too.
 - Always tag every taggable resource with `local.required_tags`.
 - Always include `description` on variables and outputs.
 - Always pessimistic-pin providers (`~>`).
-- Always run `tofu validate` before claiming completion.
+- Validation is a hard gate: never claim completion, and never let a track be marked done, without a passing `tofu validate`. If the validator can't run, say so and treat the work as unvalidated/blocked — never imply it was verified.
 - Walk `tasks.md` in order if present, marking checkboxes as you go. The orchestrator reads progress from there.

@@ -48,42 +48,40 @@ Here are a few things you can do that will increase the likelihood of your pull 
 
 - Follow the project's coding conventions.
 - Write tests for new functionality.
-- Update documentation (`README.md`, `constraint-driven.md` — methodology notes) if your changes affect user-facing features.
+- Update documentation (`README.md`, `docs/`) if your changes affect user-facing features.
 - Keep your change as focused as possible. If there are multiple changes you would like to make that are not dependent upon each other, consider submitting them as separate pull requests.
 - Write a [good commit message](http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html).
-- Test your changes against the spec → plan → implement → review pipeline to ensure compatibility with both Crossplane and Terraform.
+- Test your changes against the spec → plan → implement → review pipeline to ensure compatibility with all supported IaC tools (Crossplane, Terraform, and CloudFormation).
 
 ## Development workflow
 
 When working on infrakit:
 
-1. Test changes with the `infrakit` CLI commands (`/infrakit:new_composition`, `/infrakit:plan`, `/infrakit:implement`) in your coding agent of choice
-2. Verify templates are working correctly in `templates/` directory
-3. Test script functionality in the `scripts/` directory
-4. Ensure memory files (`memory/project-context.md`) are updated if major process changes are made
+1. Test changes with the `infrakit` CLI commands (`/infrakit:new_composition`, `/infrakit:plan`, `/infrakit:implement`, …) in your coding agent of choice
+2. Verify templates render correctly from the `templates/` directory (`uv run pytest tests/test_template_renderer.py`)
+3. Run the full suite with `uv run pytest`
+4. Update the bundled memory template (`templates/project-context-template.md`) if major process changes are made
 
 ### Testing template and command changes locally
 
-Running `infrakit init` pulls released packages, which won’t include your local changes.
-To test your templates, commands, and other changes locally, follow these steps:
+Templates ship **inside** the wheel and `infrakit init` runs entirely offline — there are no per-agent release packages to build. When you run the CLI from a source checkout, `template_renderer.templates_root()` prefers the repo-relative `templates/` directory, so your local edits to commands, personas, and assets show up immediately.
 
-1. **Create release packages**
-
-   Run the following command to generate the local packages:
+1. **Run the CLI from source against a throwaway project:**
 
    ```bash
-   ./.github/workflows/scripts/create-release-packages.sh v1.0.0
+   uvx --from . infrakit init /tmp/demo --ai claude --iac terraform \
+       --script sh --no-git --ignore-agent-tools
    ```
 
-2. **Copy the relevant package to your test project**
+   Swap `--iac terraform` for `crossplane` or `cloudformation` to test each tool.
 
-   ```bash
-   cp -r .genreleases/infrakit-copilot-crossplane-package-sh/. <path-to-test-project>/
-   ```
+2. **Inspect the rendered output** under `/tmp/demo/.claude/commands/` (or the
+   relevant agent folder) and confirm your template changes landed.
 
-3. **Open and test the agent**
+3. **Re-run** after edits — `init` is idempotent and won't overwrite existing
+   files, so use a fresh directory (or `--force --here`) to see changes.
 
-   Navigate to your test project folder and open the agent to verify your implementation.
+See [`docs/local-development.md`](docs/local-development.md) for more ways to run the CLI from source.
 
 ## AI contributions in InfraKit
 
@@ -144,7 +142,6 @@ Please be respectful to maintainers and disclose AI assistance.
 
 ## Resources
 
-- [Methodology notes — multi-persona spec-driven pipeline](./constraint-driven.md)
 - [Spec Kit (upstream methodology InfraKit builds on)](https://github.com/github/spec-kit)
 - [How to Contribute to Open Source](https://opensource.guide/how-to-contribute/)
 - [Using Pull Requests](https://help.github.com/articles/about-pull-requests/)

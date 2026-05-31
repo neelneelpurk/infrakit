@@ -83,7 +83,7 @@ def init(
         help="Directory for agent command files (required with --ai generic, e.g. .myagent/commands/)",
     ),
     iac_tool: str = typer.Option(
-        None, "--iac", help="IaC tool to use: crossplane or terraform"
+        None, "--iac", help=f"IaC tool to use: {', '.join(IAC_CONFIG)}"
     ),
     script_type: str = typer.Option(
         None, "--script", help="Script type to use: sh or ps"
@@ -500,15 +500,27 @@ def init(
             console.print()
             console.print(security_notice)
 
+    # Resolve the IaC-specific command names so the printed next-steps match the
+    # commands that were actually rendered for the selected tool (these differ:
+    # crossplane uses new_composition/update_composition, terraform uses
+    # create_terraform_code/update_terraform_code, etc.).
+    iac_cfg = IAC_CONFIG.get(selected_iac, {})
+    resource_term = iac_cfg.get("resource_term", "resource")
+    iac_cmds = iac_cfg.get("iac_commands", [])
+    create_cmd = next(
+        (c for c in iac_cmds if c.startswith(("new_", "create_"))), None
+    )
+    update_cmd = next((c for c in iac_cmds if c.startswith("update_")), None)
+
     steps_lines = []
+    n = 1
     if not here:
         steps_lines.append(
-            f"1. Go to the project folder: [cyan]cd {project_name}[/cyan]"
+            f"{n}. Go to the project folder: [cyan]cd {project_name}[/cyan]"
         )
-        step_num = 2
     else:
-        steps_lines.append("1. You're already in the project directory!")
-        step_num = 2
+        steps_lines.append(f"{n}. You're already in the project directory!")
+    n += 1
 
     # Codex-specific setup step.
     if selected_ai == "codex":
@@ -520,29 +532,47 @@ def init(
             cmd = f"export CODEX_HOME={quoted_path}"
 
         steps_lines.append(
-            f"{step_num}. Set [cyan]CODEX_HOME[/cyan] environment variable before running Codex: [cyan]{cmd}[/cyan]"
+            f"{n}. Set [cyan]CODEX_HOME[/cyan] environment variable before running Codex: [cyan]{cmd}[/cyan]"
         )
-        step_num += 1
+        n += 1
 
-    steps_lines.append(f"{step_num}. Start using slash commands with your AI agent:")
+    steps_lines.append(f"{n}. Establish your project standards:")
+    steps_lines.append(
+        "   • [cyan]/infrakit:setup[/] - Capture project context & tagging standards"
+    )
+    steps_lines.append(
+        "   • [cyan]/infrakit:setup-coding-style[/] - Define IaC coding standards"
+    )
+    n += 1
 
     steps_lines.append(
-        "   2.1 [cyan]/infrakit:project_context[/] - Establish infrastructure principles"
+        f"{n}. Build a {resource_term} (full spec-driven pipeline):"
     )
+    if create_cmd:
+        steps_lines.append(
+            f"   • [cyan]/infrakit:{create_cmd}[/] - Spec → architect → security review"
+        )
+    if update_cmd:
+        steps_lines.append(
+            f"   • [cyan]/infrakit:{update_cmd}[/] - Update an existing {resource_term}"
+        )
     steps_lines.append(
-        "   2.2 [cyan]/infrakit:new_composition[/] - Create a new resource with multi-agent workflow"
+        "   • [cyan]/infrakit:plan[/] - Plan + auto-generate tasks.md"
     )
+    steps_lines.append("   • [cyan]/infrakit:implement[/] - Execute the task list")
     steps_lines.append(
-        "   2.3 [cyan]/infrakit:update_composition[/] - Update an existing resource"
+        "   • [cyan]/infrakit:review[/] - Review generated code against standards"
     )
+    n += 1
+
+    steps_lines.append(f"{n}. …or take the lighter path:")
     steps_lines.append(
-        "   2.4 [cyan]/infrakit:status[/] - Track progress of all tracks"
+        "   • [cyan]/infrakit:quick_fix[/] - Requirement → plan → tasks → review → implement"
     )
+    n += 1
+
     steps_lines.append(
-        "   2.5 [cyan]/infrakit:review_composition[/] - Review against best practices"
-    )
-    steps_lines.append(
-        "   2.6 [cyan]/infrakit:validate_composition[/] - Validate generated YAML"
+        f"{n}. Track all work anytime with [cyan]/infrakit:status[/]"
     )
 
     steps_panel = Panel(
@@ -552,11 +582,11 @@ def init(
     console.print(steps_panel)
 
     enhancement_lines = [
-        "Enhancement commands [bright_black](improve quality & confidence)[/bright_black]",
+        "Optional quality gates [bright_black](run before merging)[/bright_black]",
         "",
-        "○ [cyan]/infrakit:clarify[/] [bright_black](optional)[/bright_black] - Clarify ambiguous requirements",
-        "○ [cyan]/infrakit:analyze[/] [bright_black](optional)[/bright_black] - Cross-artifact consistency report",
-        "○ [cyan]/infrakit:checklist[/] [bright_black](optional)[/bright_black] - Quality validation checklist",
+        "○ [cyan]/infrakit:analyze[/] - Cross-artifact consistency report (spec ↔ plan ↔ code)",
+        "○ [cyan]/infrakit:architect-review[/] - Architecture, cost & reliability review",
+        "○ [cyan]/infrakit:security-review[/] - Compliance audit (SOC 2, HIPAA, PCI-DSS, …)",
     ]
     enhancements_panel = Panel(
         "\n".join(enhancement_lines),
@@ -601,6 +631,33 @@ def check():
 
     tracker.add("code-insiders", "Visual Studio Code Insiders")
     check_tool("code-insiders", tracker=tracker)
+
+    # IaC tool CLIs (per IAC_CONFIG requires_tools / optional_tools). Required
+    # tools report an error when missing; optional ones are skipped so the check
+    # doesn't look like a failure for tools the user simply hasn't installed.
+    iac_tools: dict[str, dict] = {}
+    for iac_cfg in IAC_CONFIG.values():
+        iac_name = iac_cfg.get("name", "")
+        for tool_name in iac_cfg.get("requires_tools", []):
+            entry = iac_tools.setdefault(tool_name, {"used_by": set(), "required": False})
+            entry["used_by"].add(iac_name)
+            entry["required"] = True
+        for tool_name in iac_cfg.get("optional_tools", []):
+            entry = iac_tools.setdefault(tool_name, {"used_by": set(), "required": False})
+            entry["used_by"].add(iac_name)
+
+    for tool_name in sorted(iac_tools):
+        info = iac_tools[tool_name]
+        used_by = ", ".join(sorted(info["used_by"]))
+        suffix = "" if info["required"] else ", optional"
+        key = f"iac:{tool_name}"
+        tracker.add(key, f"{tool_name} ({used_by}{suffix})")
+        if shutil.which(tool_name) is not None:
+            tracker.complete(key, "available")
+        elif info["required"]:
+            tracker.error(key, "not found")
+        else:
+            tracker.skip(key, "optional, not installed")
 
     console.print(tracker.render())
 

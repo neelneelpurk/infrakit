@@ -13,7 +13,7 @@ This guide walks you through creating a production-ready Crossplane composition 
 
 ## The Workflow
 
-```
+```text
 setup → new_composition → plan → implement → review
 ```
 
@@ -27,7 +27,7 @@ Each step builds on the last, and every artifact lives in `.infrakit_tracks/trac
 
 Run `/infrakit:setup` once per project to define your infrastructure standards:
 
-```
+```text
 /infrakit:setup
 ```
 
@@ -49,7 +49,7 @@ This creates three files that every other command reads:
 
 Use `/infrakit:new_composition` to start the multi-persona solutioning workflow:
 
-```
+```text
 /infrakit:new_composition
 ```
 
@@ -70,7 +70,7 @@ The track is registered in `.infrakit_tracks/tracks.md` with status `spec-genera
 
 ## Step 3: Generate the Implementation Plan and Task List
 
-```
+```text
 /infrakit:plan <track-name>
 ```
 
@@ -95,22 +95,22 @@ Run `/infrakit:analyze <track-name>` after planning to verify spec/plan consiste
 
 ## Step 4: Implement
 
-```
+```text
 /infrakit:implement <track-name>
 ```
 
-The Crossplane Engineer works through each task in `tasks.md` in order, marking `- [ ]` → `- [x]` as it goes. All generated YAML follows your `coding-style.md` and `tagging.md` exactly.
+The Crossplane Engineer works through each task in `tasks.md` in order, marking `- [ ]` → `- [x]` as it goes. All generated YAML follows your `coding-style.md` and `tagging-standard.md` exactly.
 
 After all tasks complete, it:
 1. Updates `.infrakit_context.md` with the final resource interface
 2. Appends an entry to `.infrakit_changelog.md`
-3. Regenerates `infrakit_composition_contract.md` from the implemented YAML
+3. Regenerates `README.md` from the implemented YAML as the human-readable contract (the XRD `definition.yaml` is the machine-readable one)
 
 ---
 
 ## Step 5: Review
 
-```
+```text
 /infrakit:review <resource-directory>
 ```
 
@@ -131,7 +131,7 @@ The review report shows findings by severity (CRITICAL / HIGH / MEDIUM / LOW) an
 
 ## Complete Example: PostgreSQL Database
 
-```
+```text
 # Step 1 (done once per project)
 /infrakit:setup
 
@@ -157,7 +157,7 @@ The review report shows findings by severity (CRITICAL / HIGH / MEDIUM / LOW) an
 
 Check the status of all tracks at any time:
 
-```
+```text
 /infrakit:status
 ```
 

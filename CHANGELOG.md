@@ -9,7 +9,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_Nothing yet._
+*Nothing yet.*
+
+## [1.0.0] - 2026-05-31
+
+First stable release. CloudFormation joins Terraform and Crossplane as a
+first-class IaC tool, validation is enforced rather than promised, the eval
+harness gives the multi-persona pipeline a measuring stick, and the
+CLI/commands/docs are mutually consistent.
+
+### Added
+
+- **AWS CloudFormation support** — CloudFormation is now a first-class IaC tool alongside Crossplane and Terraform. `infrakit init --iac cloudformation` renders the full command set (`create_cloudformation_code`, `update_cloudformation_code`, `plan`, `implement`, `review`, `setup-coding-style`, `quick_fix`) plus a new `cloudformation-engineer` persona (registered as a Claude subagent) and a CloudFormation coding-style template. The engineer verifies every resource `Type` and property against the AWS resource-type reference before writing, enforces `NoEcho` + dynamic-reference secret handling, per-resource `Tags`, `DeletionPolicy`/`UpdateReplacePolicy` on stateful resources, and validates with `cfn-lint`. `resource_term` is `template`; required tool is the `aws` CLI with optional `cfn-lint`. A full `examples/cloudformation/` walkthrough is included.
+
+- **`/infrakit:quick_fix` — the lighter path.** A new per-IaC command (Terraform, Crossplane, CloudFormation) that takes a natural-language requirement and runs the IaC Engineer through **plan → tasks → your review → implement**, skipping the multi-persona spec/architect/security ceremony. It creates a `quick` track for the audit trail, verifies provider schemas, presents `plan.md` + `tasks.md` for approval before writing any code, then implements behind a mandatory validation gate. It recommends the full pipeline for compliance-sensitive or new-design changes.
+
+- **`infrakit check` now reports IaC tool CLIs.** In addition to git and agent CLIs, `check` now reports each IaC tool's required and optional binaries (`kubectl`, `terraform`, `aws`, `cfn-lint`, …) — required tools error when missing, optional ones are skipped — driven by `IAC_CONFIG`. This makes the documented behaviour ("checks kubectl/terraform") actually true.
+
+- **Eval harness (`evals/`).** A deterministic, headless scorer that grades generated IaC against the secure-defaults the personas promise (encryption at rest, public access blocked, required tags, no hardcoded secrets, TLS, versioning, deletion safety, validator passes). It scores the three committed example deliverables (which must hit 100%) and two deliberately-insecure fixtures (which must score ≤40%, proving the scorer can actually fail). Wired into pytest (`tests/test_evals.py`) so CI runs ~38 checks offline; a documented `--generator llm` hook in `evals/run.py` is the seam for driving the real pipeline against golden requirements and measuring whether the multi-persona flow beats a single prompt.
+
+### Changed
+
+- **`infrakit init` "Next Steps" panel is now IaC-aware and accurate.** It derives the create/update command names and resource term from `IAC_CONFIG` (so it prints `create_terraform_code` / `new_composition` / `create_cloudformation_code` correctly), walks the real `setup → setup-coding-style → spec → plan → implement → review` flow, surfaces the `quick_fix` fast path, and uses a clean running counter. The `--iac` help text now lists all supported tools dynamically.
+
+- **Validation is now a hard gate.** `/infrakit:implement` and `/infrakit:quick_fix` no longer treat validation as a suggested next step — they must run the tool's validator (`tofu validate` / `cfn-lint` / `crossplane render` + YAML parse) and may **not** mark a track ✅ done until it passes. If the validator can't run, the track is set to ❌ blocked (or flagged unvalidated), never silently "done". The three engineer personas carry the same constraint. This makes the "provider-verified" claim enforced rather than promised.
+
+### Fixed
+
+- **Removed references to commands that don't exist.** The init panels, `skills.py` `SKILL_DESCRIPTIONS`, and several docs referenced `/infrakit:project_context`, `/infrakit:review_composition`, `/infrakit:validate_composition`, `/infrakit:clarify`, `/infrakit:checklist`, `/infrakit:specify_composition`, `/infrakit:plan_composition`, and `/infrakit:implement_composition` — none of which are real commands. All now reference the actual command set.
+
+- **`SKILL_DESCRIPTIONS` rekeyed to real command stems.** The `--ai-skills` enhanced descriptions were keyed to stale names (`specify_composition`, `coding_style`, `tagging`, …) so they were silently dropped on install. Keys now match every real stem across all three IaC tools.
+
+- **Stale `*_contract.md` references removed from docs.** `README.md`, `docs/quickstart.md`, and `docs/installation.md` still described a per-resource `infrakit_composition_contract.md` / `.infrakit_terraform_contract.md` that is no longer generated; they now correctly describe the code + `README.md` as the contract. Also corrected `docs/installation.md`'s `tagging.md` → `tagging-standard.md`.
+
+- **Markdown linting now actually runs in CI.** The `globs` in `.github/workflows/lint.yml` were quoted (`'**/*.md'`), so markdownlint-cli2 matched a literal filename and linted **0 files** — the lint job was a silent no-op. Removed the quotes so it lints the repo. To keep the suite green without fighting InfraKit's deliberate dense-prompt template style, `.markdownlint-cli2.jsonc` now also disables MD031/MD032 (blanks around fences/lists in the `> - …` Q&A prompt blocks) and MD055/MD056 (the `[PROJECT_SPECIFIC_TAGS]` placeholder-in-table in the coding-style assets), and ignores `.venv`/`node_modules`/`.pytest_cache`/`dist`/`build`. Remaining real issues were fixed: a language was added to every bare code fence (MD040) and a stray double blank line removed (MD012). The repo now lints clean.
+
+### Removed
+
+- **Dead `github_api.py` module and four unused dependencies.** `infrakit version` never actually checked for upgrades — it only prints local metadata — so the 104-line `github_api.py` (token/rate-limit/SSL helpers left over from the retired template-download flow) had no callers. Deleted it, its 22-test suite, and the dependencies it pulled in: `httpx[socks]`, `truststore`, plus `packaging` and `platformdirs` which were also unused. The CLI now declares 5 runtime deps (was 9) and makes **zero network calls**. Docs that described `infrakit version` as "check for upgrades" / a network call were corrected.
 
 ## [0.1.14] - 2026-05-12
 

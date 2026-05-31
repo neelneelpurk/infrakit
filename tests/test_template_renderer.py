@@ -134,14 +134,19 @@ class TestWriteCommand:
     [
         ("claude", "terraform", ".claude/commands", ".md"),
         ("claude", "crossplane", ".claude/commands", ".md"),
+        ("claude", "cloudformation", ".claude/commands", ".md"),
         ("codex", "terraform", ".codex/prompts", ".md"),
         ("codex", "crossplane", ".codex/prompts", ".md"),
+        ("codex", "cloudformation", ".codex/prompts", ".md"),
         ("gemini", "terraform", ".gemini/commands", ".toml"),
         ("gemini", "crossplane", ".gemini/commands", ".toml"),
+        ("gemini", "cloudformation", ".gemini/commands", ".toml"),
         ("copilot", "terraform", ".github/agents", ".agent.md"),
         ("copilot", "crossplane", ".github/agents", ".agent.md"),
+        ("copilot", "cloudformation", ".github/agents", ".agent.md"),
         ("generic", "terraform", ".infrakit/commands", ".md"),
         ("generic", "crossplane", ".infrakit/commands", ".md"),
+        ("generic", "cloudformation", ".infrakit/commands", ".md"),
     ],
 )
 def test_materialize_project_layouts(
@@ -288,6 +293,42 @@ def test_materialize_crossplane_uses_crossplane_commands(tmp_path: Path):
     cmds = sorted(p.name for p in (project / ".claude" / "commands").iterdir())
     assert "infrakit:new_composition.md" in cmds
     assert "infrakit:create_terraform_code.md" not in cmds
+
+
+def test_materialize_cloudformation_uses_cloudformation_commands(tmp_path: Path):
+    project = tmp_path / "proj"
+    materialize_project(
+        project, ai_assistant="claude", iac_tool="cloudformation", script_variant="sh"
+    )
+    cmds = sorted(p.name for p in (project / ".claude" / "commands").iterdir())
+    assert "infrakit:create_cloudformation_code.md" in cmds
+    assert "infrakit:update_cloudformation_code.md" in cmds
+    # Other tools' create commands must be absent.
+    assert "infrakit:new_composition.md" not in cmds
+    assert "infrakit:create_terraform_code.md" not in cmds
+
+
+def test_materialize_claude_cloudformation_registers_cloudformation_engineer(tmp_path: Path):
+    project = tmp_path / "proj"
+    materialize_project(
+        project, ai_assistant="claude", iac_tool="cloudformation", script_variant="sh"
+    )
+    agents_dir = project / ".claude" / "agents"
+    assert (agents_dir / "cloudformation-engineer.md").is_file()
+    # The other IaC engineers must NOT register on a cloudformation project.
+    assert not (agents_dir / "terraform-engineer.md").exists()
+    assert not (agents_dir / "crossplane-engineer.md").exists()
+
+
+@pytest.mark.parametrize("iac", ["terraform", "crossplane", "cloudformation"])
+def test_materialize_renders_quick_fix_for_all_tools(tmp_path: Path, iac: str):
+    """The quick_fix fast-path command must render for every IaC tool."""
+    project = tmp_path / f"proj-{iac}"
+    materialize_project(
+        project, ai_assistant="claude", iac_tool=iac, script_variant="sh"
+    )
+    cmds = sorted(p.name for p in (project / ".claude" / "commands").iterdir())
+    assert "infrakit:quick_fix.md" in cmds
 
 
 def test_unknown_agent_raises(tmp_path: Path):

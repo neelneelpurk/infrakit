@@ -167,7 +167,7 @@ For **every** managed resource:
 
 ## Step 6: Present Code Review Report
 
-```
+```text
 # Crossplane Code Review: <resource-directory>
 
 **Date**: <YYYY-MM-DD>

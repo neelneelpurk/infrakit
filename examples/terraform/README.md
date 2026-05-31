@@ -151,4 +151,3 @@ The `.infrakit_tracks/` directory is the audit trail. Commit it to git alongside
 ## See also
 
 - [`examples/crossplane/`](../crossplane/) — the same flow against a Crossplane `XPostgreSQLInstance`.
-- [Methodology notes](../../constraint-driven.md) — how the multi-persona pipeline extends spec-driven development.

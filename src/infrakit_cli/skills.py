@@ -32,20 +32,35 @@ AGENT_SKILLS_DIR_OVERRIDES = {
 # Default skills directory for agents not in AGENT_CONFIG.
 DEFAULT_SKILLS_DIR = ".agents/skills"
 
-# Enhanced descriptions for each infrakit command skill.
+# Enhanced descriptions for each infrakit command skill, keyed by the command
+# stem (the file name without the ``infrakit:`` prefix or extension). Keys MUST
+# match real command stems across all IaC tools — generic commands, the shared
+# per-IaC commands, and the tool-specific create/update commands — or the
+# enhanced description is silently dropped and the command's own frontmatter
+# description is used instead. This dict is a superset; only the stems rendered
+# for the selected IaC tool are ever looked up.
 SKILL_DESCRIPTIONS = {
-    "specify_composition": "Create or update infrastructure resource specifications from natural language descriptions. Use when starting new Crossplane compositions. Generates a structured spec following spec-driven methodology.",
-    "plan_composition": "Generate architecture review and implementation plans for Crossplane compositions. Use after creating a spec to define the XRD, Composition, and Claim structure. Produces a detailed plan before any YAML is written.",
-    "implement_composition": "Generate XRD, Composition, and example Claim YAML from an approved plan. Use after planning to produce production-ready Crossplane manifests.",
-    "review_composition": "Review generated Crossplane YAML against best practices and project coding standards. Checks Pipeline mode usage, patch paths, providerConfigRef patterns, and tagging requirements.",
-    "validate_composition": "Run crossplane render validation against generated Composition and Claim manifests. Use to verify the output is syntactically and structurally correct.",
-    "analyze": "Perform cross-artifact consistency analysis across spec, plan, and implementation artifacts. Use to identify gaps or inconsistencies before or after implementation.",
-    "clarify": "Structured clarification workflow for underspecified infrastructure requirements. Use before planning to resolve ambiguities through targeted questioning.",
-    "project_context": "Create or update project context and standards. Use at project start to establish encryption policies, tagging requirements, network topology standards, and compliance rules.",
-    "checklist": "Generate quality checklists for validating infrastructure resource completeness and Crossplane best-practice compliance.",
-    "taskstoissues": "Convert tasks from tasks.md into GitHub issues. Use after task breakdown to track work items in GitHub project management.",
-    "coding_style": "Specify and update the project coding style standards using the coding-style-template.md.",
-    "tagging": "Update project tagging requirements using the tagging-standard-template.md.",
+    # --- Generic (IaC-agnostic) commands ---
+    "setup": "Capture project-wide IaC standards: cloud provider, naming conventions, environments, required tags, security baseline, and compliance scope. Run this first, before any resource work; it writes .infrakit/context.md and .infrakit/tagging-standard.md.",
+    "setup-coding-style": "Define or update the project's IaC coding-style standards (file layout, version policy, tagging strategy, security defaults) by filling in .infrakit/coding-style.md. Run after /infrakit:setup and before generating code.",
+    "status": "Show a read-only dashboard of every infrastructure track and its current status (spec-generated, planned, in-progress, done, blocked) with suggested next actions.",
+    "analyze": "Cross-artifact consistency check: verify a track's spec, plan, and generated code are aligned before merging. Read-only; reports gaps and contradictions by severity.",
+    "architect-review": "Cloud Architect review of a track's spec/plan for architecture correctness, reliability, cost, and completeness. Environment-aware (dev vs staging vs prod). Produces a scored findings report.",
+    "security-review": "Cloud Security Engineer compliance audit of a track against the project's frameworks (SOC 2, HIPAA, ISO 27001, PCI-DSS, NIST 800-53, CIS). Maps each finding to a named control and offers fixes or documented waivers.",
+    # --- Shared per-IaC workflow commands ---
+    "plan": "Generate an implementation plan and auto-generate tasks.md from a track's approved spec. The IaC Engineer verifies provider/resource field names against the official docs before writing the plan — never guessing.",
+    "implement": "Execute a track's tasks.md: write the actual IaC code, mark each task complete, then write the per-resource artifacts (.infrakit_context.md, .infrakit_changelog.md, README.md).",
+    "review": "Review generated IaC code against the project's coding-style and tagging standards. Findings are categorized CRITICAL/HIGH/MEDIUM/LOW with fixes offered for approval.",
+    "quick_fix": "Lighter path: from a requirement, the IaC Engineer plans, generates a task list, presents plan.md + tasks.md for your review, then implements — skipping the multi-persona spec/architect/security ceremony. Still verifies provider schemas, applies required tags, and gates completion on validation.",
+    # --- Crossplane-specific ---
+    "new_composition": "(Crossplane) Start a new XR/Composition through the Solutions Engineer → Cloud Architect → Cloud Security Engineer pipeline. Produces a confirmed spec.md ready for /infrakit:plan.",
+    "update_composition": "(Crossplane) Update an existing Composition: scan the current YAML, classify the change (additive/behavioral/breaking), run the multi-persona review, and produce an updated spec (plus migration.md if breaking).",
+    # --- Terraform-specific ---
+    "create_terraform_code": "(Terraform) Start a new module through the Solutions Engineer → Cloud Architect → Cloud Security Engineer pipeline. Produces a confirmed spec.md ready for /infrakit:plan.",
+    "update_terraform_code": "(Terraform) Update an existing module: scan the current HCL, classify the change (additive/behavioral/breaking), run the multi-persona review, and produce an updated spec (plus migration.md if breaking).",
+    # --- CloudFormation-specific ---
+    "create_cloudformation_code": "(CloudFormation) Start a new template through the Solutions Engineer → Cloud Architect → Cloud Security Engineer pipeline. Produces a confirmed spec.md ready for /infrakit:plan.",
+    "update_cloudformation_code": "(CloudFormation) Update an existing template: scan the current template, classify the change (additive/behavioral/breaking), run the multi-persona review, and produce an updated spec (plus migration.md if breaking).",
 }
 
 

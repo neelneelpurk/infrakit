@@ -14,8 +14,6 @@ The package's public API is split into focused submodules:
 - :mod:`infrakit_cli.banner` — ASCII banner and Typer group override.
 - :mod:`infrakit_cli.tools` — subprocess + tool-detection helpers.
 - :mod:`infrakit_cli.git_utils` — repo detection + ``git init`` wrapper.
-- :mod:`infrakit_cli.github_api` — token/auth/rate-limit helpers for the
-  optional ``infrakit version`` check.
 - :mod:`infrakit_cli.console` — shared :class:`rich.console.Console` instance.
 
 The top-level :func:`main` function (re-exported below) is the
@@ -30,14 +28,6 @@ from .bootstrap import initialize_iac_config
 from .cli import app, callback, check, init, main, mcp, version
 from .console import console
 from .git_utils import init_git_repo, is_git_repo
-from .github_api import (
-    _format_rate_limit_error,
-    _github_auth_headers,
-    _github_token,
-    _parse_rate_limit_headers,
-    client,
-    ssl_context,
-)
 from .interactive import get_key, select_with_arrows
 from .mcp import (
     _build_mcp_markdown_block,
@@ -100,13 +90,6 @@ __all__ = [
     "SKILL_DESCRIPTIONS",
     "_get_skills_dir",
     "install_ai_skills",
-    # GitHub API helpers (used by the version command)
-    "_format_rate_limit_error",
-    "_github_auth_headers",
-    "_github_token",
-    "_parse_rate_limit_headers",
-    "client",
-    "ssl_context",
 ]
 
 

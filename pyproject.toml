@@ -1,6 +1,6 @@
 [project]
 name = "infrakit-cli"
-version = "0.1.17"
+version = "1.0.0"
 description = "spec-kit for IaC, with a multi-persona pipeline. Bootstrap Crossplane / Terraform projects with structured spec-driven workflows for Claude Code, Codex, Gemini, Copilot, or any generic agent."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -33,7 +33,7 @@ keywords = [
     "cli",
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
@@ -53,12 +53,8 @@ dependencies = [
     "typer",
     "click>=8.1",
     "rich",
-    "httpx[socks]",
-    "platformdirs",
     "readchar",
-    "truststore>=0.10.4",
     "pyyaml>=6.0",
-    "packaging>=23.0",
 ]
 
 [project.urls]
@@ -94,6 +90,7 @@ include = [
     "templates/**",
     "examples/**",
     "tests/**",
+    "evals/**",
     "README.md",
     "CHANGELOG.md",
     "pyproject.toml",

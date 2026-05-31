@@ -1,0 +1,194 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Northwind secure S3 bucket — customer-managed KMS encryption, all public access
+  blocked, TLS-only access, versioning, and lifecycle tiering on noncurrent versions.
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Governance
+        Parameters:
+          - Environment
+          - CostCenter
+          - Team
+          - Project
+          - DataClassification
+      - Label:
+          default: Lifecycle & Encryption
+        Parameters:
+          - TransitionToIADays
+          - TransitionToGlacierDays
+          - NoncurrentExpirationDays
+          - KmsKeyDeletionWindowDays
+
+Parameters:
+  Environment:
+    Type: String
+    Description: Deployment environment.
+    AllowedValues: [dev, staging, prod]
+  CostCenter:
+    Type: String
+    Description: Billing allocation code (format CC-NNNN).
+    AllowedPattern: "^CC-[0-9]{4}$"
+    ConstraintDescription: Must look like CC-3017.
+  Team:
+    Type: String
+    Description: Owning team.
+    AllowedValues: [orders, fulfillment, returns, analytics, customer-portal, platform]
+  Project:
+    Type: String
+    Description: Project identifier.
+    Default: northwind-platform
+  DataClassification:
+    Type: String
+    Description: Data sensitivity tier; drives access-review cadence.
+    AllowedValues: [public, internal, confidential, restricted]
+  TransitionToIADays:
+    Type: Number
+    Description: Days before noncurrent versions move to STANDARD_IA.
+    Default: 30
+    MinValue: 1
+  TransitionToGlacierDays:
+    Type: Number
+    Description: Days before noncurrent versions move to GLACIER.
+    Default: 90
+    MinValue: 1
+  NoncurrentExpirationDays:
+    Type: Number
+    Description: Days before noncurrent versions are permanently expired.
+    Default: 365
+    MinValue: 1
+  KmsKeyDeletionWindowDays:
+    Type: Number
+    Description: Waiting period (days) before the KMS key is deleted after scheduling.
+    Default: 30
+    MinValue: 7
+    MaxValue: 30
+
+Resources:
+  # Customer-managed KMS key — rotation on, scoped to the deploying account.
+  BucketKey:
+    Type: AWS::KMS::Key
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Description: !Sub "CMK for ${AWS::StackName} secure bucket"
+      EnableKeyRotation: true
+      PendingWindowInDays: !Ref KmsKeyDeletionWindowDays
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AccountRootFullAccess
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
+            Action: "kms:*"
+            Resource: "*"
+      Tags:
+        - Key: managed-by
+          Value: cloudformation
+        - Key: environment
+          Value: !Ref Environment
+        - Key: cost-center
+          Value: !Ref CostCenter
+        - Key: team
+          Value: !Ref Team
+        - Key: project
+          Value: !Ref Project
+        - Key: data-classification
+          Value: !Ref DataClassification
+
+  BucketKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${AWS::StackName}-bucket"
+      TargetKeyId: !Ref BucketKey
+
+  # The secure bucket itself. Name is CloudFormation-generated to avoid global collisions.
+  SecureBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - BucketKeyEnabled: true
+            ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !GetAtt BucketKey.Arn
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: noncurrent-version-tiering
+            Status: Enabled
+            NoncurrentVersionTransitions:
+              - StorageClass: STANDARD_IA
+                TransitionInDays: !Ref TransitionToIADays
+              - StorageClass: GLACIER
+                TransitionInDays: !Ref TransitionToGlacierDays
+            NoncurrentVersionExpiration:
+              NoncurrentDays: !Ref NoncurrentExpirationDays
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 7
+      Tags:
+        - Key: managed-by
+          Value: cloudformation
+        - Key: environment
+          Value: !Ref Environment
+        - Key: cost-center
+          Value: !Ref CostCenter
+        - Key: team
+          Value: !Ref Team
+        - Key: project
+          Value: !Ref Project
+        - Key: data-classification
+          Value: !Ref DataClassification
+
+  # Deny any request not using TLS.
+  SecureBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref SecureBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource:
+              - !GetAtt SecureBucket.Arn
+              - !Sub "${SecureBucket.Arn}/*"
+            Condition:
+              Bool:
+                "aws:SecureTransport": "false"
+
+Outputs:
+  BucketName:
+    Description: Name of the secure bucket.
+    Value: !Ref SecureBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-BucketName"
+  BucketArn:
+    Description: ARN of the secure bucket.
+    Value: !GetAtt SecureBucket.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-BucketArn"
+  BucketRegionalDomainName:
+    Description: Regional domain name for the bucket.
+    Value: !GetAtt SecureBucket.RegionalDomainName
+  KmsKeyArn:
+    Description: ARN of the customer-managed KMS key encrypting the bucket.
+    Value: !GetAtt BucketKey.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-KmsKeyArn"

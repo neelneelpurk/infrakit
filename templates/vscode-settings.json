@@ -1,9 +1,11 @@
 {
     "chat.promptFilesRecommendations": {
-        "infrakit:project_context": true,
-        "infrakit:specify_composition": true,
-        "infrakit:plan_composition": true,
-        "infrakit:implement_composition": true
+        "infrakit:setup": true,
+        "infrakit:setup-coding-style": true,
+        "infrakit:plan": true,
+        "infrakit:implement": true,
+        "infrakit:review": true,
+        "infrakit:quick_fix": true
     },
     "chat.tools.terminal.autoApprove": {
         ".infrakit/scripts/bash/": true,

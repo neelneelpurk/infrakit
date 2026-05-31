@@ -51,7 +51,8 @@ Verify required files exist:
 >
 > Run the spec generation command for your IaC tool:
 > - Crossplane: `/infrakit:new_composition <track-name>`
-> - Terraform: `/infrakit:create_terraform_code <track-name>`"
+> - Terraform: `/infrakit:create_terraform_code <track-name>`
+> - CloudFormation: `/infrakit:create_cloudformation_code <track-name>`"
 **HALT**
 
 **If plan.md is missing:**
@@ -148,7 +149,7 @@ For every status field in spec.md:
 
 ## Step 6: Output Analysis Report
 
-```
+```text
 # Track Analysis Report: <track-name>
 
 **Date**: <YYYY-MM-DD>

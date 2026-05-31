@@ -93,7 +93,7 @@ Ask these questions **one at a time**. Wait for each response before asking the 
 > "What is your project's directory structure for Crossplane resources?
 >
 > Default structure:
-> ```
+> ```text
 > apis/<group>/<version>/
 > compositions/
 > examples/<kind>/

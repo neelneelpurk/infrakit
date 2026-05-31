@@ -153,13 +153,28 @@ If a task appears to conflict with coding standards, flag it **before** writing:
 
 ---
 
-## Step 8: Post-Implementation Summary
+## Step 8: Validation Gate (MANDATORY — blocks completion)
 
-After all tasks are marked `[x]`:
+After all tasks are marked `[x]`, you **MUST** validate the generated YAML before writing any artifacts (Step 9) or marking the track done (Step 10). This is a hard gate, not a suggestion: InfraKit's promise is *schema-verified* output, and unvalidated YAML does not satisfy it.
 
-> "✅ All tasks complete for track `<track-name>`.
+Run, from the resource directory:
+
+```bash
+python3 -c "import yaml,sys; [list(yaml.safe_load_all(open(f))) for f in sys.argv[1:]]" \
+  definition.yaml composition.yaml examples/*.yaml
+```
+
+If `crossplane render` is available locally with `function-patch-and-transform` cached, also run it against the example claim — it catches patch-path and field errors the parse can't.
+
+- **Pass** (YAML parses; `crossplane render` succeeds if run) → continue to Step 9.
+- **Fail** → fix the generated YAML and re-run. Do **not** proceed until it passes.
+- **`crossplane render` unavailable** → the YAML parse is the floor and must pass; note in the summary that `crossplane render` was not run so the user knows reconcile-time errors weren't checked. If even the YAML parse cannot run, mark the track ❌ blocked rather than claiming success.
+
+Once validation passes:
+
+> "✅ All tasks complete and YAML validates for track `<track-name>` (`crossplane render`: <ran/skipped>).
 >
-> **Suggested next step**: Run `/infrakit:review <resource-directory>` to review the implementation against coding standards."
+> **Next step**: Run `/infrakit:review <resource-directory>` to review the implementation against coding standards."
 
 ---
 
@@ -271,6 +286,8 @@ Present the regenerated README to the user:
 ---
 
 ## Step 10: Update Track Registry
+
+Only mark the track ✅ done if the Step 8 validation gate **passed** (at minimum the YAML parses). If validation could not run or failed, set the status to ❌ blocked instead and surface why — never mark unvalidated YAML as done.
 
 Update `.infrakit_tracks/tracks.md` — change the track's status to `✅ done`.
 

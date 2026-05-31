@@ -71,7 +71,7 @@ For each managed resource required by the spec:
 
 1. Identify the correct Crossplane provider family (e.g., `provider-aws`, `provider-azure`, `provider-gcp`)
 2. Look up the correct `apiVersion` and `kind` using:
-   ```
+   ```text
    search_web("site:doc.crds.dev <provider> <resource-type>")
    ```
    Example: `search_web("site:doc.crds.dev upbound provider-aws RDSInstance")`
@@ -213,7 +213,7 @@ Applied to **every** managed resource:
 ├── composition.yaml   # Composition (Pipeline mode)
 ├── claim.yaml         # Example claim with all parameters
 └── README.md          # Usage documentation
-```
+```text
 
 ## Implementation Phases
 

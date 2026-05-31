@@ -4,7 +4,7 @@
 </div>
 
 <p align="center">
-    <strong>spec-kit for IaC, with a multi-persona pipeline. Open-source; works with Claude Code, Codex, Gemini, Copilot, plus any generic agent; ships Crossplane and Terraform out of the box.</strong>
+    <strong>spec-kit for IaC, with a multi-persona pipeline. Open-source; works with Claude Code, Codex, Gemini, Copilot, plus any generic agent; ships Crossplane, Terraform, and CloudFormation out of the box.</strong>
 </p>
 
 <p align="center">
@@ -39,9 +39,11 @@
 
 ## 🤔 What is InfraKit?
 
-InfraKit is **[spec-kit](https://github.com/github/spec-kit) for infrastructure-as-code**, with a multi-persona pipeline layered on top. Spec-kit pioneered Spec-Driven Development for application code: capture the spec first, then plan, then implement, with every artifact committed to git. InfraKit takes that shape, points it at Crossplane and Terraform, and inserts four specialized personas between the spec and the code so that cloud architecture, security compliance, and IaC implementation each get their own dedicated review pass.
+InfraKit is **[spec-kit](https://github.com/github/spec-kit) for infrastructure-as-code**, with a multi-persona pipeline layered on top. Spec-kit pioneered Spec-Driven Development for application code: capture the spec first, then plan, then implement, with every artifact committed to git. InfraKit takes that shape, points it at Crossplane, Terraform, and CloudFormation, and inserts four specialized personas between the spec and the code so that cloud architecture, security compliance, and IaC implementation each get their own dedicated review pass.
 
-Concretely: a **Cloud Solutions Engineer** persona translates intent into a structured spec. A **Cloud Architect** presents 2–3 design options with cost/reliability trade-offs. A **Cloud Security Engineer** flags structural patterns that commonly violate SOC 2, HIPAA, ISO 27001, CIS, and NIST controls *before any code is written*. An **IaC Engineer** then generates Crossplane YAML or Terraform HCL — and a full audit trail (spec, plan, task list, contract, changelog) lands alongside the code in git.
+Concretely: a **Cloud Solutions Engineer** persona translates intent into a structured spec. A **Cloud Architect** presents 2–3 design options with cost/reliability trade-offs. A **Cloud Security Engineer** flags structural patterns that commonly violate SOC 2, HIPAA, ISO 27001, CIS, and NIST controls *before any code is written*. An **IaC Engineer** then generates Crossplane YAML, Terraform HCL, or a CloudFormation template — and a full audit trail (spec, plan, task list, changelog) lands alongside the code in git.
+
+In a hurry? The lighter **`/infrakit:quick_fix`** path skips the multi-persona spec ceremony: the IaC Engineer plans your requirement, generates a task list, shows you the plan to approve, then implements (still verifying provider field names, applying required tags, and gating on validation).
 
 > **A note on compliance**: the security review is a heuristic LLM pass that flags common control violations against named frameworks. It is **not** a substitute for a real audit conducted by qualified humans with evidence collection. Use it as a first-pass guardrail, not as your compliance system of record.
 
@@ -123,7 +125,15 @@ Describe **what** you want, not **how**. The Solutions Engineer iterates until t
 /infrakit:create_terraform_code An AWS S3 bucket module. Encryption with a customer-managed KMS key, all four block_public_* flags set, TLS-only access via bucket policy, lifecycle on non-current versions, optional cross-region replication gated to prod.
 ```
 
+**CloudFormation**:
+
+```text
+/infrakit:create_cloudformation_code An RDS PostgreSQL template. StorageEncrypted with a customer-managed KMS key, PubliclyAccessible false always, Multi-AZ in prod via a Condition, master password supplied as a NoEcho parameter resolved from Secrets Manager, endpoint exported for cross-stack use.
+```
+
 The four-persona pipeline runs end-to-end. Output: a confirmed `spec.md` in `.infrakit_tracks/tracks/<track-name>/`.
+
+> **In a hurry?** **`/infrakit:quick_fix <requirement> [directory]`** runs a lighter loop — the IaC Engineer plans your requirement, generates a task list, shows you `plan.md` + `tasks.md` to approve, then implements (verifying field names, applying tags, gating on validation). It skips only the multi-persona spec/architect/security review. Reach for the full pipeline above when the change is compliance-sensitive or a new design with real trade-offs.
 
 ### 5. Plan the implementation
 
@@ -139,7 +149,7 @@ The IaC Engineer verifies provider API field names against official docs (never 
 /infrakit:implement <track-name>
 ```
 
-The IaC Engineer works through each task in `tasks.md`, marks them complete, and writes the post-implementation artifacts (`.infrakit_context.md`, `.infrakit_changelog.md`, resource contract file) alongside the code.
+The IaC Engineer works through each task in `tasks.md`, marks them complete, and writes the post-implementation artifacts (`.infrakit_context.md`, `.infrakit_changelog.md`, and a regenerated `README.md`) alongside the code.
 
 ### 7. Review
 
@@ -169,13 +179,13 @@ If you encounter issues with one of the supported agents, please [open an issue]
 
 ## 🧰 Supported IaC Platforms
 
-| Platform                                | Status      | Output | Resource Term |
-| --------------------------------------- | ----------- | ------ | ------------- |
-| [Crossplane](https://crossplane.io/)    | ✅ Supported | YAML   | Composition   |
-| [Terraform](https://www.terraform.io/)  | ✅ Supported | HCL    | Module        |
-| [OpenTofu](https://opentofu.org/)       | 🗺️ Roadmap  | —      | —             |
-| [Pulumi](https://www.pulumi.com/)       | 🗺️ Roadmap  | —      | —             |
-| AWS CloudFormation                      | 🗺️ Roadmap  | —      | —             |
+| Platform                                                                     | Status      | Output | Resource Term |
+| ---------------------------------------------------------------------------- | ----------- | ------ | ------------- |
+| [Crossplane](https://crossplane.io/)                                         | ✅ Supported | YAML   | Composition   |
+| [Terraform](https://www.terraform.io/)                                       | ✅ Supported | HCL    | Module        |
+| [AWS CloudFormation](https://docs.aws.amazon.com/cloudformation/)            | ✅ Supported | YAML   | Template      |
+| [OpenTofu](https://opentofu.org/)                                            | 🗺️ Roadmap  | —      | —             |
+| [Pulumi](https://www.pulumi.com/)                                            | 🗺️ Roadmap  | —      | —             |
 
 ## 🔤 Available Slash Commands
 
@@ -185,24 +195,27 @@ After running `infrakit init`, your AI coding agent has access to these slash co
 
 Essential commands for the spec-driven workflow:
 
-| Command                          | Description                                                                              |
-| -------------------------------- | ---------------------------------------------------------------------------------------- |
-| `/infrakit:setup`                | Capture project context, coding standards, and tagging requirements                      |
-| `/infrakit:setup-coding-style`   | Update or replace project coding-style standards                                         |
-| `/infrakit:new_composition`      | (Crossplane) Solutions → Architect → Security → spec workflow for a new XR/Composition   |
-| `/infrakit:create_terraform_code`| (Terraform) Solutions → Architect → Security → spec workflow for a new module            |
-| `/infrakit:plan`                 | Generate the implementation plan and auto-generate `tasks.md`                            |
-| `/infrakit:implement`            | Execute tasks from `tasks.md`, mark complete, write context / changelog / contract       |
-| `/infrakit:review`               | Review generated code against coding standards and tagging                               |
+| Command                              | Description                                                                                |
+| ------------------------------------ | ------------------------------------------------------------------------------------------ |
+| `/infrakit:setup`                    | Capture project context, coding standards, and tagging requirements                        |
+| `/infrakit:setup-coding-style`       | Update or replace project coding-style standards                                           |
+| `/infrakit:new_composition`          | (Crossplane) Solutions → Architect → Security → spec workflow for a new XR/Composition     |
+| `/infrakit:create_terraform_code`    | (Terraform) Solutions → Architect → Security → spec workflow for a new module              |
+| `/infrakit:create_cloudformation_code` | (CloudFormation) Solutions → Architect → Security → spec workflow for a new template      |
+| `/infrakit:plan`                     | Generate the implementation plan and auto-generate `tasks.md`                              |
+| `/infrakit:implement`                | Execute tasks from `tasks.md`, mark complete, write context / changelog / README           |
+| `/infrakit:review`                   | Review generated code against coding standards and tagging                                 |
+| `/infrakit:quick_fix`          | Lighter path: requirement → IaC Engineer plans, generates tasks, you review, then implements |
 
 ### Brownfield Commands
 
 For updating resources that already exist:
 
-| Command                              | Description                                                                                |
-| ------------------------------------ | ------------------------------------------------------------------------------------------ |
-| `/infrakit:update_composition`       | (Crossplane) Brownfield scan → contract review → solutioning → updated spec                |
-| `/infrakit:update_terraform_code`    | (Terraform) Brownfield scan → contract review → solutioning → updated spec                 |
+| Command                                 | Description                                                                                |
+| --------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `/infrakit:update_composition`          | (Crossplane) Brownfield scan → context review → solutioning → updated spec                 |
+| `/infrakit:update_terraform_code`       | (Terraform) Brownfield scan → context review → solutioning → updated spec                  |
+| `/infrakit:update_cloudformation_code`  | (CloudFormation) Brownfield scan → context review → solutioning → updated spec             |
 
 ### Quality & Review Commands
 
@@ -220,9 +233,9 @@ Optional commands for cross-artifact validation:
 | Command            | Description                                                                            |
 | ------------------ | -------------------------------------------------------------------------------------- |
 | `infrakit init`    | Initialize a new InfraKit project — renders the per-agent layout from bundled prompts  |
-| `infrakit check`   | Check installed tools (`git`, `claude`, `gemini`, `kubectl`, `terraform`, etc.)        |
+| `infrakit check`   | Check installed tools (`git`, agent CLIs, plus per-IaC tools: `kubectl`, `terraform`, `aws`, `cfn-lint`, …) |
 | `infrakit mcp`     | Install a pre-defined MCP server recipe into your agent's MCP config                   |
-| `infrakit version` | Display CLI version and check for upgrades                                             |
+| `infrakit version` | Display CLI version and system information                                             |
 
 ### `infrakit init` options
 
@@ -232,7 +245,7 @@ Optional commands for cross-artifact validation:
 | `--here`                | Flag       | Initialize in the current directory instead of a new subdirectory            |
 | `--ai`                  | Choice     | AI assistant — see [Supported AI Coding Agents](#-supported-ai-coding-agents)|
 | `--ai-commands-dir`     | Path       | Command files directory (required with `--ai generic`)                       |
-| `--iac`                 | Choice     | IaC tool: `crossplane` or `terraform`                                        |
+| `--iac`                 | Choice     | IaC tool: `crossplane`, `terraform`, or `cloudformation`                     |
 | `--script`              | Choice     | Script type: `sh` (default) or `ps` (PowerShell)                             |
 | `--ignore-agent-tools`  | Flag       | Skip AI agent tool availability checks                                       |
 | `--no-git`              | Flag       | Skip `git init`                                                              |
@@ -248,6 +261,9 @@ infrakit init my-infra --ai claude --iac crossplane
 
 # New project with Claude Code and Terraform
 infrakit init my-infra --ai claude --iac terraform
+
+# New project with Claude Code and AWS CloudFormation
+infrakit init my-infra --ai claude --iac cloudformation
 
 # Initialize in the current directory
 infrakit init --here --ai claude --iac crossplane
@@ -298,11 +314,16 @@ Per-resource artifacts written by `/infrakit:implement` (committed alongside the
 
 ```text
 <resource-directory>/
-├── .infrakit_context.md              # Resource interface: variables, outputs, resources
+├── .infrakit_context.md              # Resource interface: parameters/variables, outputs, resources
 ├── .infrakit_changelog.md            # Append-only structured change history
-└── infrakit_composition_contract.md  # (Crossplane) API surface contract
-    OR .infrakit_terraform_contract.md  # (Terraform) Module interface contract
+└── README.md                         # Human-readable usage + interface contract
 ```
+
+> The generated code itself is the machine-readable contract — the XRD
+> (`definition.yaml`) for Crossplane, `variables.tf` / `outputs.tf` /
+> `versions.tf` for Terraform, `template.yaml` for CloudFormation — and the
+> `README.md` is the human-readable one. InfraKit no longer writes a separate
+> `*_contract.md` file.
 
 ### Track status lifecycle
 
@@ -328,20 +349,21 @@ InfraKit borrows its core philosophy from [spec-kit](https://github.com/github/s
 
 | Phase                                    | Focus                              | Key Activities                                                                                                                                                                              |
 | ---------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Greenfield Development**               | Create new resources from scratch  | <ul><li>Capture project-wide constraints via `/infrakit:setup`</li><li>Spec via `/infrakit:new_composition` / `/infrakit:create_terraform_code`</li><li>Plan → implement → review</li></ul> |
-| **Iterative Enhancement** ("Brownfield") | Update existing resources          | <ul><li>Scan existing code into context/contract files</li><li>`/infrakit:update_composition` / `/infrakit:update_terraform_code`</li><li>Re-run the four-persona pipeline</li></ul>        |
+| **Greenfield Development**               | Create new resources from scratch  | <ul><li>Capture project-wide constraints via `/infrakit:setup`</li><li>Spec via `/infrakit:new_composition` / `/infrakit:create_terraform_code` / `/infrakit:create_cloudformation_code`</li><li>Plan → implement → review (or `/infrakit:quick_fix` for the fast path)</li></ul> |
+| **Iterative Enhancement** ("Brownfield") | Update existing resources          | <ul><li>Scan existing code into context files</li><li>`/infrakit:update_composition` / `/infrakit:update_terraform_code` / `/infrakit:update_cloudformation_code`</li><li>Re-run the four-persona pipeline</li></ul>        |
 | **Continuous Compliance**                | Audit and enforce on every change  | <ul><li>`/infrakit:analyze`, `/infrakit:architect-review`, `/infrakit:security-review`</li><li>Findings tracked in the track directory</li><li>Re-audit triggered by spec or code drift</li></ul>|
 
 ## 📁 Examples
 
-Two complete, end-to-end walkthroughs showing every file InfraKit produces:
+Three complete, end-to-end walkthroughs showing every file InfraKit produces:
 
 | Example                                  | IaC Tool   | Scenario                                                                                  |
 | ---------------------------------------- | ---------- | ----------------------------------------------------------------------------------------- |
 | [`examples/terraform/`](./examples/terraform/) | Terraform  | AWS S3 secure-bucket module — KMS, public-access blocked, TLS-only, lifecycle, optional CRR |
 | [`examples/crossplane/`](./examples/crossplane/) | Crossplane | `XPostgreSQLInstance` wrapping AWS RDS via `provider-aws-rds` with per-instance KMS         |
+| [`examples/cloudformation/`](./examples/cloudformation/) | CloudFormation | AWS S3 secure-bucket template — KMS, public access blocked, TLS-only, lifecycle, versioning |
 
-Each example contains the `.infrakit/` config, a single track under `.infrakit_tracks/tracks/`, and the final deliverable (the `.tf` module or Composition YAML).
+Each example contains the `.infrakit/` config, a single track under `.infrakit_tracks/tracks/`, and the final deliverable (the `.tf` module, Composition YAML, or CloudFormation `template.yaml`).
 
 ## 🔧 Prerequisites
 
@@ -352,6 +374,7 @@ Each example contains the `.infrakit/` config, a single track under `.infrakit_t
 - [Git](https://git-scm.com/downloads)
 - For Crossplane: [kubectl](https://kubernetes.io/docs/tasks/tools/) plus a Crossplane-enabled cluster (or [kind](https://kind.sigs.k8s.io/) for local dev)
 - For Terraform: [Terraform](https://developer.hashicorp.com/terraform/install) or [OpenTofu](https://opentofu.org/docs/intro/install/)
+- For CloudFormation: the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) and (recommended) [cfn-lint](https://github.com/aws-cloudformation/cfn-lint) for local validation
 
 ## 📋 Detailed Process
 
@@ -447,9 +470,9 @@ The IaC Engineer:
 - Walks `tasks.md` top-to-bottom, marking each `- [ ]` → `- [x]` as it goes
 - Writes the actual `.tf` or YAML files into the target directory
 - After all tasks complete, writes three post-implementation artifacts:
-  - `.infrakit_context.md` — resource interface (variables, outputs, resources provisioned)
+  - `.infrakit_context.md` — resource interface (parameters/variables, outputs, resources provisioned)
   - `.infrakit_changelog.md` — append-only structured change history
-  - Resource contract file (`infrakit_composition_contract.md` or `.infrakit_terraform_contract.md`)
+  - `README.md` — regenerated from the code as the human-readable interface contract
 
 Track status → `✅ done`.
 
@@ -485,7 +508,7 @@ Reviews the generated HCL or YAML against `coding-style.md` and `tagging-standar
 
 ### Iterating
 
-For brownfield work (updating an existing resource), use `/infrakit:update_composition` or `/infrakit:update_terraform_code` instead of the `new_*` / `create_*` commands. These first scan the existing code into `.infrakit_context.md` + `.infrakit_terraform_contract.md` (or composition contract), present them for your review, then run the spec → plan → implement workflow against the updated requirements.
+For brownfield work (updating an existing resource), use `/infrakit:update_composition`, `/infrakit:update_terraform_code`, or `/infrakit:update_cloudformation_code` instead of the `new_*` / `create_*` commands. These first scan the existing code into `.infrakit_context.md` (reconstructing it from the code if absent), present it for your review, then run the spec → plan → implement workflow against the updated requirements.
 
 </details>
 
@@ -493,7 +516,7 @@ For brownfield work (updating an existing resource), use `/infrakit:update_compo
 
 ### Corporate proxy / self-signed certificates
 
-Templates ship inside the InfraKit wheel, so `infrakit init` does **not** call any network. The only network call is the optional version check in `infrakit version`, which uses the system trust store via `truststore`. If you cannot reach `api.github.com` for the version check, the rest of the CLI still works — just skip `infrakit version`.
+Templates ship inside the InfraKit wheel, so InfraKit makes **no network calls at all** — `infrakit init`, `check`, `mcp`, and `version` all run entirely offline. Corporate proxies and self-signed certificates are a non-issue; nothing in the CLI reaches out to the network.
 
 ### `tasks.md` not found when running `/infrakit:implement`
 
@@ -516,8 +539,7 @@ mv .infrakit/tracks.md .infrakit_tracks/tracks.md
 | [Quick Start Guide](./docs/quickstart.md)                      | End-to-end Crossplane workflow walkthrough                                               |
 | [Installation Guide](./docs/installation.md)                   | Detailed installation, upgrades, and corporate-proxy setup                               |
 | [Upgrade Guide](./docs/upgrade.md)                              | How to upgrade the CLI and update project template files                                 |
-| [Methodology notes](./constraint-driven.md)                    | Deeper notes on the multi-persona pipeline and how it extends spec-driven development    |
-| [Examples](./examples/)                                        | Full Terraform and Crossplane walkthroughs                                               |
+| [Examples](./examples/)                                        | Full Terraform, Crossplane, and CloudFormation walkthroughs                              |
 | [CHANGELOG](./CHANGELOG.md)                                    | Full version history and breaking changes                                                |
 | [CONTRIBUTING](./CONTRIBUTING.md)                              | How to contribute to InfraKit                                                            |
 

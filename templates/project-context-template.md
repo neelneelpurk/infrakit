@@ -35,7 +35,7 @@ staging, prod, security-audit. All member accounts reside under the Platform OU 
 
 **Organization Hierarchy:**
 
-```
+```text
 [ORG_HIERARCHY]
 ```
 
