@@ -1,26 +1,30 @@
 name: Release to PyPI + GitHub
 
-# Every merge to main triggers a full release. The workflow:
+# pyproject.toml is the source of truth for the version. Every push to main
+# runs this workflow; it releases whatever version pyproject.toml declares, but
+# only if no GitHub Release exists for that version yet. So a merge that bumps
+# the version cuts a release; a merge that leaves it untouched is a no-op. To
+# ship any version — patch, minor, or major — bump `version` in pyproject.toml
+# in your PR and merge it.
 #
-# 1. Computes the next patch version from the latest git tag.
-# 2. Skips if a GitHub release already exists for that version.
-# 3. Stamps the version into pyproject.toml.
-# 4. Builds the wheel + sdist with `uv build`.
-# 5. Runs `twine check --strict` against the built artifacts.
+# Each run does, in order:
+#
+# 1. Reads the version from pyproject.toml (-> new_version, e.g. v1.0.0).
+# 2. Skips every remaining step if a GitHub Release already exists for that
+#    version. This is the idempotency guard: no-bump merges do nothing, and a
+#    failed run can be safely re-run from the same version number.
+# 3. Builds the wheel + sdist with `uv build`.
+# 4. Runs `twine check --strict` against the built artifacts.
+# 5. Generates release notes from the commits since the latest tag.
 # 6. Publishes to PyPI via trusted publishing (PEP 740 / OIDC) — no API
 #    tokens required, see https://docs.pypi.org/trusted-publishers/.
-# 7. Creates a GitHub Release with the wheel + sdist attached. The tag
-#    is created server-side by `gh release create` against the merge
-#    commit on main.
-# 8. Commits the version bump back to main with `[skip ci]` so the next
-#    push (which would otherwise see the same latest_tag) picks up from
-#    the bumped pyproject.toml.
+# 7. Creates a GitHub Release with the wheel + sdist attached. The tag is
+#    created server-side by `gh release create` against the commit on main.
 #
-# `[skip ci]` is honoured natively by GitHub Actions — the version-bump
-# commit does not re-trigger this workflow.
-#
-# If any step fails, subsequent steps are skipped — including the version
-# bump — so the next CI run will retry from the same version number.
+# CI never edits pyproject.toml — the released version is exactly what the
+# merging PR set. If any step fails, subsequent steps are skipped, so the next
+# run retries the same version. PyPI publish + GitHub Release + tag therefore
+# ship atomically: either all three or none.
 
 on:
   push:
@@ -28,7 +32,7 @@ on:
   workflow_dispatch:
 
 # Cancel any in-flight release if a newer commit arrives on main. Only one
-# release runs at a time per ref to avoid version-bump collisions.
+# release runs at a time per ref to avoid collisions.
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
@@ -43,7 +47,7 @@ jobs:
       name: pypi
       url: https://pypi.org/project/infrakit-cli/
     permissions:
-      contents: write         # create tags, commit version bump
+      contents: write         # create the release tag
       pull-requests: write    # for completeness if hooks need it
       id-token: write         # trusted publishing OIDC token
     steps:
@@ -53,7 +57,7 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Resolve next version
+      - name: Resolve release version (from pyproject.toml)
         id: get_tag
         run: |
           chmod +x .github/workflows/scripts/get-next-version.sh
@@ -76,12 +80,6 @@ jobs:
       - name: Install uv
         if: steps.check_release.outputs.exists == 'false'
         uses: astral-sh/setup-uv@v3
-
-      - name: Stamp version into pyproject.toml
-        if: steps.check_release.outputs.exists == 'false'
-        run: |
-          chmod +x .github/workflows/scripts/update-version.sh
-          .github/workflows/scripts/update-version.sh ${{ steps.get_tag.outputs.new_version }}
 
       - name: Build wheel and sdist
         if: steps.check_release.outputs.exists == 'false'
@@ -122,12 +120,3 @@ jobs:
             --notes-file release_notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Commit version bump back to main
-        if: steps.check_release.outputs.exists == 'false'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add pyproject.toml
-          git diff --cached --quiet || git commit -m "chore: bump version to ${{ steps.get_tag.outputs.new_version }} [skip ci]"
-          git push

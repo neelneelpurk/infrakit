@@ -4,25 +4,23 @@ This document covers how InfraKit ships releases to PyPI and GitHub, and what to
 
 ## TL;DR
 
-> **Every merge to `main` ships a new patch release: PyPI upload, GitHub Release, and tag — all in one workflow run.**
+> **`pyproject.toml` is the source of truth for the version. Bump it, merge to `main`, and the release ships itself: PyPI upload, GitHub Release, and tag — all in one workflow run.**
 
-No path filters. No manual steps. No release branches. No "let's wait for a freeze." The contract is: if your change is worth merging, it's worth shipping.
+A merge to `main` that changes the version cuts a release of that exact version (patch, minor, or major). A merge that leaves the version untouched is a no-op — the workflow runs but stops at the "release already exists" guard. The contract is: the version in `pyproject.toml` is the version on PyPI.
 
 ## The release pipeline
 
 The full pipeline lives in a single workflow — [`.github/workflows/release.yml`](./.github/workflows/release.yml). Every push to `main` runs it. Each run does, in order:
 
-1. **Resolve next version.** Reads the latest git tag (e.g. `v0.1.13`), bumps the patch component (`v0.1.14`).
-2. **Skip if the release already exists.** Lets the workflow re-run safely (idempotent). Every subsequent step is gated on this check.
-3. **Stamp `pyproject.toml`.** Writes the new version into the package metadata.
-4. **Build wheel + sdist** with `uv build`. Templates are force-included into the wheel via `[tool.hatch.build.targets.wheel.force-include]`.
-5. **`twine check --strict`** against the built artifacts. Catches malformed README, broken `long_description_content_type`, missing license, etc. before they reach PyPI.
-6. **Generate release notes** from the commits since the last tag.
-7. **Publish to PyPI** via [Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (PEP 740 / OIDC). No API token in the repo.
-8. **Create GitHub Release** with the wheel + sdist attached. `gh release create --target main` creates the tag server-side against the merge commit at the same time.
-9. **Commit the version bump** back to `main` with `[skip ci]` so future pushes pick up from the new version. The `[skip ci]` marker is honoured natively by GitHub Actions — the bump commit does **not** re-trigger this workflow.
+1. **Read the version** from `pyproject.toml` (e.g. `1.0.0` → `v1.0.0`). This is the version that will be released — CI does not compute or bump it.
+2. **Skip if the release already exists.** If a GitHub Release for that version is already published, every remaining step is skipped. This is the idempotency guard: merges that don't touch the version do nothing, and a half-finished run can be re-run safely.
+3. **Build wheel + sdist** with `uv build`. Templates are force-included into the wheel via `[tool.hatch.build.targets.wheel.force-include]`.
+4. **`twine check --strict`** against the built artifacts. Catches malformed README, broken `long_description_content_type`, missing license, etc. before they reach PyPI.
+5. **Generate release notes** from the commits since the last tag.
+6. **Publish to PyPI** via [Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (PEP 740 / OIDC). No API token in the repo.
+7. **Create GitHub Release** with the wheel + sdist attached. `gh release create --target main` creates the tag server-side against the commit on `main` at the same time.
 
-If any step fails, subsequent steps are skipped — **including** the version bump — so the next CI run retries from the same version number. PyPI publish + GitHub Release + tag therefore ship atomically: either all three or none.
+CI never writes to `pyproject.toml` and never pushes a commit back to `main` — the released version is exactly what the merging PR set. If any step fails, subsequent steps are skipped, so the next CI run retries from the same version number. PyPI publish + GitHub Release + tag therefore ship atomically: either all three or none.
 
 ## One-time setup (already done)
 
@@ -60,35 +58,36 @@ After these three steps, the workflow's `pypa/gh-action-pypi-publish` step authe
 
 ## What triggers a release
 
-**Any merge to `main`.** No path filter. Every commit that lands on main runs the workflow and ships a release. README typos, doc tweaks, example refreshes — they all bump a patch version and upload a new wheel.
+**Any merge to `main` that bumps the version in `pyproject.toml`.** The workflow runs on every push to main, but only the runs where `pyproject.toml`'s version has no existing GitHub Release actually publish — the rest stop at the idempotency guard.
 
-This is a deliberate choice. The alternative (path filters) requires constant maintenance ("does this dir count? what about that one?") and tends to drift out of sync with reality. Bumping a patch number for a README edit is essentially free; the cost of *missing* a release because the trigger filter didn't fire is much higher.
+This is a deliberate choice. Tying the release to the version in `pyproject.toml` means the version on PyPI always matches the version in the repo at that commit — no CI-side computation, no version-bump commit pushed back to main, no drift between the tag and the package metadata. The trade-off versus auto-bumping every merge is that you have to remember to bump the version when you want to ship; the idempotency guard makes forgetting harmless (no duplicate release), and the CHANGELOG entry is the natural place to notice.
 
-If you want to land changes without a release — for instance, in-progress doc cleanup that doesn't justify a version bump — squash them into your next substantive PR.
+To land changes *without* a release — in-progress doc cleanup, a refactor that isn't worth a version — just don't touch `version`; the merge is a no-op for the release pipeline.
 
-### Manual releases
+### Manual / on-demand runs
 
-Outside of a normal merge, you can fire the workflow on demand:
+You can fire the workflow by hand (e.g. to re-run after a transient failure):
 
 ```bash
 gh workflow run release.yml --ref main
 ```
 
-Same workflow, same outcome: PyPI upload, GitHub Release, tag, version-bump commit.
+It reads the current `pyproject.toml` version and releases it if that version hasn't been released yet — same outcome as a merge. Running it when the version already has a release is a safe no-op.
 
 ## Versioning
 
-InfraKit follows **semver-ish patch-bumping**. Each release is a patch bump (`v0.1.13` → `v0.1.14`). The minor and major numbers stay where they are until a maintainer manually tags a higher version:
+InfraKit follows [Semantic Versioning](https://semver.org/). The version lives in `pyproject.toml` and is the single source of truth for both PyPI and the git tag.
 
-```bash
-# Cut a minor release manually
-git tag v0.2.0
-git push origin v0.2.0
-# Then push a change that triggers release.yml — it picks up v0.2.0 and
-# the next auto-bumped version will be v0.2.1.
+To cut any release — patch, minor, or major — edit `version` in `pyproject.toml`, add a CHANGELOG entry, and merge to `main`:
+
+```toml
+# pyproject.toml
+[project]
+name = "infrakit-cli"
+version = "1.0.1"   # was 1.0.0 — this single edit is the whole release
 ```
 
-Breaking changes are flagged with `!` in the commit subject (e.g. `feat(packaging)!:`) and a minor bump is cut manually before the next release.
+There is no separate `git tag` step — the workflow creates the matching tag (`v1.0.1`) when it publishes. Breaking changes are flagged with `!` in the commit subject (e.g. `feat(packaging)!:`) and warrant a minor or major bump.
 
 ## Local sanity checks before pushing
 
@@ -126,7 +125,7 @@ PyPI does **not** allow re-uploading the same version. Options:
 
 ### PyPI publish step failed mid-way
 
-The version-bump commit is the **last** step in the workflow. If publish failed, the version is not yet committed to `main` — the next CI run will pick up the same version number and retry.
+No GitHub Release is created until *after* PyPI publish succeeds, so a failed publish leaves no release for that version. Re-run the workflow (`gh workflow run release.yml --ref main`) — it reads the same version from `pyproject.toml`, finds no existing release, and retries from the top.
 
 ### GitHub Release was created but PyPI publish failed
 

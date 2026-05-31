@@ -160,7 +160,10 @@ test -f demo/.claude/commands/infrakit:setup.md
 
 ## Release
 
-Every merge to `main` auto-ships a patch release (PyPI + GitHub Release + tag)
-via `.github/workflows/release.yml`. Version in `pyproject.toml` is stamped by
-CI; do not hand-bump for normal changes. Add a CHANGELOG `[Unreleased]` entry for
-user-visible changes. Minor/major bumps are tagged manually.
+`pyproject.toml` is the source of truth for the version. Every merge to `main`
+runs `.github/workflows/release.yml`, which ships the version declared in
+`pyproject.toml` (PyPI + GitHub Release + tag) — but **only if no GitHub Release
+exists for it yet**. So bumping `version` in your PR is what cuts a release of
+that version (patch, minor, or major alike); a merge that leaves it untouched is
+a no-op (the run stops at the "release already exists" guard). CI never edits
+`pyproject.toml`. Add a CHANGELOG entry for user-visible changes.
