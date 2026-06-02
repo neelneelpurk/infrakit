@@ -1,0 +1,135 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: cassandra-keyspace-aws
+  labels:
+    provider: aws
+    service: keyspaces
+spec:
+  compositeTypeRef:
+    apiVersion: database.platform.acme.com/v1alpha1
+    kind: XCassandraKeyspace
+  mode: Pipeline
+  pipeline:
+    - step: render-resources
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{- $xr := .observed.composite.resource }}
+            {{- $p := $xr.spec.parameters }}
+            {{- $labels := $xr.metadata.labels }}
+            {{- $region := $p.region | default "us-east-1" }}
+            {{- $keyspace := printf "%s_%s_%s" $p.environment $p.teamName $p.keyspaceName }}
+            {{- $table := $p.tableName | default "events" }}
+            {{- $pitr := eq $p.environment "prod" }}
+            {{- if hasKey $p "pointInTimeRecovery" }}{{ $pitr = $p.pointInTimeRecovery }}{{ end }}
+            {{- $claimName := index $labels "crossplane.io/claim-name" | default "" }}
+            {{- $claimNs := index $labels "crossplane.io/claim-namespace" | default "" }}
+            {{- $kms := index .observed.resources "kms-key" }}
+            {{- $kmsArn := "" }}
+            {{- if $kms }}{{ $kmsArn = $kms.resource.status.atProvider.arn }}{{ end }}
+            ---
+            # Customer-managed KMS key for Amazon Keyspaces encryption
+            apiVersion: kms.aws.upbound.io/v1beta1
+            kind: Key
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: kms-key
+            spec:
+              forProvider:
+                region: {{ $region }}
+                description: {{ printf "Amazon Keyspaces encryption key for %s" $keyspace | quote }}
+                enableKeyRotation: true
+                deletionWindowInDays: 30
+                tags:
+                  crossplane.io/claim-name: {{ $claimName | quote }}
+                  crossplane.io/claim-namespace: {{ $claimNs | quote }}
+                  managed-by: crossplane
+                  environment: {{ $p.environment | quote }}
+                  team: {{ $p.teamName | quote }}
+                  cost-center: {{ $p.costCenter | quote }}
+              providerConfigRef:
+                name: default
+            ---
+            # Amazon Keyspaces keyspace (name set via the external-name annotation)
+            apiVersion: keyspaces.aws.upbound.io/v1beta1
+            kind: Keyspace
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: keyspace
+                crossplane.io/external-name: {{ $keyspace }}
+            spec:
+              forProvider:
+                region: {{ $region }}
+                tags:
+                  crossplane.io/claim-name: {{ $claimName | quote }}
+                  crossplane.io/claim-namespace: {{ $claimNs | quote }}
+                  managed-by: crossplane
+                  environment: {{ $p.environment | quote }}
+                  team: {{ $p.teamName | quote }}
+                  cost-center: {{ $p.costCenter | quote }}
+              providerConfigRef:
+                name: default
+            ---
+            # Amazon Keyspaces table — stateful, so deletionPolicy is Orphan
+            apiVersion: keyspaces.aws.upbound.io/v1beta1
+            kind: Table
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: table
+            spec:
+              deletionPolicy: Orphan
+              forProvider:
+                region: {{ $region }}
+                keyspaceName: {{ $keyspace | quote }}
+                tableName: {{ $table | quote }}
+                schemaDefinition:
+                  - column:
+                      - name: device_id
+                        type: text
+                      - name: event_time
+                        type: timestamp
+                      - name: payload
+                        type: text
+                    partitionKey:
+                      - name: device_id
+                    clusteringKey:
+                      - name: event_time
+                        orderBy: DESC
+                capacitySpecification:
+                  - throughputMode: PAY_PER_REQUEST
+                encryptionSpecification:
+                  - type: CUSTOMER_MANAGED_KMS_KEY
+                  {{- if $kmsArn }}
+                    kmsKeyIdentifier: {{ $kmsArn | quote }}
+                  {{- end }}
+                pointInTimeRecovery:
+                  - status: {{ if $pitr }}ENABLED{{ else }}DISABLED{{ end }}
+                tags:
+                  crossplane.io/claim-name: {{ $claimName | quote }}
+                  crossplane.io/claim-namespace: {{ $claimNs | quote }}
+                  managed-by: crossplane
+                  environment: {{ $p.environment | quote }}
+                  team: {{ $p.teamName | quote }}
+                  cost-center: {{ $p.costCenter | quote }}
+              providerConfigRef:
+                name: default
+            ---
+            # Update the XR status only (no composition-resource-name annotation)
+            apiVersion: database.platform.acme.com/v1alpha1
+            kind: XCassandraKeyspace
+            status:
+              keyspaceName: {{ $keyspace | quote }}
+              tableName: {{ $table | quote }}
+              contactPoint: {{ printf "cassandra.%s.amazonaws.com" $region | quote }}
+              {{- if $kmsArn }}
+              kmsKeyArn: {{ $kmsArn | quote }}
+              {{- end }}
+    - step: ready
+      functionRef:
+        name: function-auto-ready

@@ -39,11 +39,22 @@
 
 ## 🤔 What is InfraKit?
 
-InfraKit is **[spec-kit](https://github.com/github/spec-kit) for infrastructure-as-code**, with a multi-persona pipeline layered on top. Spec-kit pioneered Spec-Driven Development for application code: capture the spec first, then plan, then implement, with every artifact committed to git. InfraKit takes that shape, points it at Crossplane, Terraform, and CloudFormation, and inserts four specialized personas between the spec and the code so that cloud architecture, security compliance, and IaC implementation each get their own dedicated review pass.
+AI writes Terraform in seconds — and that turned out to be the problem. Hand infrastructure to coding agents with no shared standard and you get drift: ask three engineers for "an S3 bucket" and you get three incompatible modules — different tags, different layout, one with public access left open. They all "work." None of them match. And the quickest way to lose a team's trust is a hallucinated argument name that sails past `plan` and dies at `apply`.
 
-Concretely: a **Cloud Solutions Engineer** persona translates intent into a structured spec. A **Cloud Architect** presents 2–3 design options with cost/reliability trade-offs. A **Cloud Security Engineer** flags structural patterns that commonly violate SOC 2, HIPAA, ISO 27001, CIS, and NIST controls *before any code is written*. An **IaC Engineer** then generates Crossplane YAML, Terraform HCL, or a CloudFormation template — and a full audit trail (spec, plan, task list, changelog) lands alongside the code in git.
+InfraKit is **[spec-kit](https://github.com/github/spec-kit) for infrastructure-as-code** with a fix for exactly that. It keeps spec-kit's shape — capture intent first, then plan, then implement, every artifact in git — and adds the two things IaC actually needs: **constraints captured up front and enforced as hard gates**, and **a four-persona pipeline** that gives architecture, security, and implementation each a dedicated pass.
 
-In a hurry? The lighter **`/infrakit:quick_fix`** path skips the multi-persona spec ceremony: the IaC Engineer plans your requirement, generates a task list, shows you the plan to approve, then implements (still verifying provider field names, applying required tags, and gating on validation).
+**Constraint-driven development.** Before a line of resource code is written, `/infrakit:setup` captures your standards — cloud provider, naming, tagging, per-environment security baselines, compliance scope — into `.infrakit/`. Every downstream command reads them, so "make me a database" returns *your* database — same naming, same tags, same posture — no matter who runs it.
+
+**Four personas, one job each:**
+
+- **Cloud Solutions Engineer** — turns intent into a structured `spec.md`, one clarifying question at a time.
+- **Cloud Architect** — reviews that spec for reliability, cost, completeness, and environment-fit, returning severity-tagged findings and a verdict. It judges; it doesn't write code.
+- **Cloud Security Engineer** — audits the spec against the frameworks you scoped (SOC 2, HIPAA, ISO 27001, PCI-DSS, NIST 800-53, CIS, FedRAMP) *before any code is written*.
+- **IaC Engineer** — generates Crossplane YAML, Terraform HCL, or a CloudFormation template, **verifying every field against the provider's own docs** (`registry.terraform.io` / `doc.crds.dev` / the AWS resource-type reference) before writing it. Never guessing argument names is the project's core trust claim.
+
+A full audit trail — spec, plan, task list, per-persona reviews, changelog — lands alongside the code in git, so every design decision and compliance waiver traces back to a human approval. And `/infrakit:implement` won't mark a track done until the tool's validator passes (`tofu validate` / `cfn-lint` / `crossplane render`); if it can't run, the track is **blocked**, not done.
+
+In a hurry? The lighter **`/infrakit:quick_fix`** path skips the multi-persona ceremony: the IaC Engineer plans your requirement, generates a task list, shows you the plan to approve, then implements — still verifying field names, applying required tags, and gating on validation.
 
 > **A note on compliance**: the security review is a heuristic LLM pass that flags common control violations against named frameworks. It is **not** a substitute for a real audit conducted by qualified humans with evidence collection. Use it as a first-pass guardrail, not as your compliance system of record.
 
