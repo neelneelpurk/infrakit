@@ -1,0 +1,86 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xcassandrakeyspaces.database.platform.acme.com
+  labels:
+    provider: aws
+    service: keyspaces
+spec:
+  group: database.platform.acme.com
+  names:
+    kind: XCassandraKeyspace
+    plural: xcassandrakeyspaces
+  claimNames:
+    kind: CassandraKeyspace
+    plural: cassandrakeyspaces
+  defaultCompositionRef:
+    name: cassandra-keyspace-aws
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  required:
+                    - environment
+                    - teamName
+                    - costCenter
+                    - keyspaceName
+                  properties:
+                    environment:
+                      type: string
+                      enum: [dev, staging, prod]
+                      description: Target environment.
+                    teamName:
+                      type: string
+                      enum: [payments, data, frontend, mobile, platform]
+                      description: Owning team.
+                    costCenter:
+                      type: string
+                      pattern: "^CC-[0-9]{4}$"
+                      description: Billing allocation code (e.g., CC-1042).
+                    region:
+                      type: string
+                      default: us-east-1
+                      description: AWS region.
+                    keyspaceName:
+                      type: string
+                      pattern: "^[a-z][a-z0-9_]{0,24}$"
+                      description: >-
+                        Logical Cassandra keyspace name. CQL identifier rules apply:
+                        lowercase letters, digits and underscores only — never dashes.
+                    tableName:
+                      type: string
+                      default: events
+                      pattern: "^[a-z][a-z0-9_]{0,40}$"
+                      description: Cassandra table name. CQL identifier rules apply.
+                    pointInTimeRecovery:
+                      type: boolean
+                      description: >-
+                        Override point-in-time recovery. Defaults from environment
+                        (prod = true, else false).
+            status:
+              type: object
+              properties:
+                keyspaceName:
+                  type: string
+                  description: Keyspace name as created in Amazon Keyspaces.
+                tableName:
+                  type: string
+                  description: Table name created within the keyspace.
+                contactPoint:
+                  type: string
+                  description: Cassandra contact point — cassandra.<region>.amazonaws.com.
+                kmsKeyArn:
+                  type: string
+                  description: ARN of the customer-managed KMS key encrypting the table.
+                ready:
+                  type: boolean
+                  description: True when the KMS key, keyspace and table are all Ready.

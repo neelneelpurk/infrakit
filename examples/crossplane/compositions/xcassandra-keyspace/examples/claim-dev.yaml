@@ -1,0 +1,13 @@
+apiVersion: database.platform.acme.com/v1alpha1
+kind: CassandraKeyspace
+metadata:
+  name: telemetry
+  namespace: data
+spec:
+  parameters:
+    environment: dev
+    teamName: data
+    costCenter: CC-1042
+    keyspaceName: device_telemetry
+    # tableName omitted — defaults to "events"
+    # pointInTimeRecovery omitted — defaults to false for dev
